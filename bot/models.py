@@ -76,3 +76,21 @@ class Order(models.Model):
 
     def get_items(self):
         return self.items.all()
+
+
+class Consultation(models.Model):
+    STATUS_CHOICES = [
+        ('new', 'Новая'),
+        ('in_progress', 'В работе'),
+        ('completed', 'Завершена'),
+    ]
+
+    name = models.CharField('Имя покупателя:', max_length=100)
+    phone_number = models.CharField('Телефон:', max_length=20)
+    budget = models.IntegerField('Ориентировочный бюджет:', blank=True, null=True)
+    preferences = models.TextField('Пожелания клиента:', blank=True)
+    status = models.CharField('Статус', max_length=20, choices=STATUS_CHOICES, default='new')
+    created_at = models.DateTimeField('Дата заявки:', auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.phone_number}) – {self.created_at.strftime('%d.%m.%Y %H:%M')}"
