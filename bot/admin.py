@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from FlowerShopBot import settings
-from .models import Bouquet, Composition, Order
+from .models import Bouquet, Composition, Order, Consultation
 
 
 class BouquetAdmin(admin.ModelAdmin):
@@ -42,9 +42,15 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'customer_name', 'order_total', 'status', 'created_at')
     list_editable = ('status',)
     list_filter = ('status',)
-    search_fields = ('customer_name', 'phone_number')
+
+
+class ConsultationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone_number', 'budget', 'status', 'created_at')
+    list_filter = ('status',)
+    list_editable = ('status',)
 
 
 admin.site.register(Bouquet, BouquetAdmin)
 admin.site.register(Composition, CompositionAdmin)
 admin.site.register(Order, OrderAdmin)
+admin.site.register(Consultation, ConsultationAdmin)
