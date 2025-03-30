@@ -1,10 +1,15 @@
 from django.contrib import admin
 from django.utils.html import format_html
+<<<<<<< HEAD
 from django.utils.timezone import localtime
 import pytz
 
 from FlowerShopBot import settings
 from .models import Bouquet, Composition, Order, Consultation
+=======
+from FlowerShopBot import settings
+from .models import Bouquet, Composition, Order, Consultation, OrderItem
+>>>>>>> upstream/main
 
 
 class BouquetAdmin(admin.ModelAdmin):
@@ -13,8 +18,12 @@ class BouquetAdmin(admin.ModelAdmin):
     )
     list_filter = ('is_available',)
     list_editable = ('is_available', 'price',)
+<<<<<<< HEAD
     search_fields = ('name', 'description', 'poetic_text')
     readonly_fields = ('created_at', 'updated_at')
+=======
+    readonly_fields = ('created_at',)
+>>>>>>> upstream/main
 
     def preview(self, obj):
         if obj.photo:
@@ -51,6 +60,7 @@ class CompositionAdmin(admin.ModelAdmin):
     preview.short_description = "Фото"
 
 
+<<<<<<< HEAD
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
         'customer_name', 'bouquet', 'phone', 'formatted_delivery_time',
@@ -93,6 +103,40 @@ class ConsultationAdmin(admin.ModelAdmin):
             return local_time.strftime('%d.%m.%Y %H:%M')
         return "-"
     formatted_created_at.short_description = "Время запроса"
+=======
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    fields = ('product', 'quantity')
+    readonly_fields = ('product', 'quantity')
+
+
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'customer_name', 'order_total', 'status', 'created_at', 'order_items_list')
+    list_editable = ('status',)
+    list_filter = ('status',)
+    inlines = [OrderItemInline]
+
+    @admin.display()
+    def order_items_list(self, obj):
+        items = obj.items.all()  # Получаем все OrderItem
+        item_strings = []
+
+        for item in items:
+            product = item.product  # Используем product, а не content_object
+            if product and hasattr(product, 'name'):
+                item_strings.append(f"{product.name} (x{item.quantity})")
+            else:
+                item_strings.append(f"❌ Ошибка: товар {item.id} не найден")
+
+        return ", ".join(item_strings) if item_strings else "Нет товаров"
+
+
+class ConsultationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone_number', 'budget', 'status', 'created_at', 'preferences')
+    list_filter = ('status',)
+    list_editable = ('status',)
+>>>>>>> upstream/main
 
 
 admin.site.register(Bouquet, BouquetAdmin)
