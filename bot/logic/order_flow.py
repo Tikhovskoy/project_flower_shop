@@ -1,5 +1,7 @@
 from .data_access import get_bouquets, save_order
 from .validators import validate_phone, normalize_phone, normalize_datetime
+from .data_access import get_compositions
+
 
 def start_bouquets(min_price: int = 0, max_price: int = 9999999):
     """
@@ -7,12 +9,14 @@ def start_bouquets(min_price: int = 0, max_price: int = 9999999):
     """
     return get_bouquets(min_price, max_price)
 
-def start_compositions(event: str):
+def start_compositions(event: str, min_price: int = 0, max_price: int = 9999999):
     """
     Возвращает букеты, подходящие под указанное событие (композиции).
+    Если заданы диапазоны цены, дополнительно фильтрует по цене.
     """
-    from .data_access import get_compositions
-    return get_compositions(event)
+    bouquets = get_compositions(event)
+    filtered = [b for b in bouquets if min_price <= b.price <= max_price]
+    return filtered
 
 def create_order(bouquet):
     """

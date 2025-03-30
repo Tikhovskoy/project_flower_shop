@@ -8,9 +8,13 @@ from .models import Bouquet, Composition, Order, Consultation
 
 
 class BouquetAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'is_available', 'created_at', 'updated_at', 'preview')
+    list_display = (
+        'name', 'price', 'is_available', 'short_poetic_text', 'created_at', 'updated_at', 'preview'
+    )
     list_filter = ('is_available',)
     list_editable = ('is_available', 'price',)
+    search_fields = ('name', 'description', 'poetic_text')
+    readonly_fields = ('created_at', 'updated_at')
 
     def preview(self, obj):
         if obj.photo:
@@ -19,6 +23,12 @@ class BouquetAdmin(admin.ModelAdmin):
                 settings.MEDIA_URL, obj.photo
             )
         return "Нет фото"
+
+    def short_poetic_text(self, obj):
+        if obj.poetic_text:
+            return (obj.poetic_text[:50] + '...') if len(obj.poetic_text) > 50 else obj.poetic_text
+        return "-"
+    short_poetic_text.short_description = "Поэтичный текст"
 
     preview.short_description = "Фото"
 
@@ -40,8 +50,12 @@ class CompositionAdmin(admin.ModelAdmin):
 
     preview.short_description = "Фото"
 
+
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('customer_name', 'bouquet', 'phone', 'formatted_delivery_time', 'short_card_text', 'status', 'formatted_created_at')
+    list_display = (
+        'customer_name', 'bouquet', 'phone', 'formatted_delivery_time',
+        'short_card_text', 'status', 'formatted_created_at'
+    )
     list_filter = ('status', 'created_at')
     search_fields = ('customer_name', 'phone', 'bouquet__name', 'card_text')
     readonly_fields = ('created_at',)
@@ -66,6 +80,7 @@ class OrderAdmin(admin.ModelAdmin):
             return (obj.card_text[:50] + '...') if len(obj.card_text) > 50 else obj.card_text
         return "-"
     short_card_text.short_description = "Открытка"
+
 
 class ConsultationAdmin(admin.ModelAdmin):
     list_display = ('user_id', 'phone', 'status', 'formatted_created_at')

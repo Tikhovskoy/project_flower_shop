@@ -13,18 +13,15 @@ def get_bouquets(min_price=0, max_price=9999999):
         price__lte=max_price
     ))
     
-def get_compositions(event=None):
-    """
-    Если event не указан, возвращаем все букеты (is_available=True).
-    Если event указан, ищем композиции с этим event, собираем их букеты.
-    """
-    if not event:
-        return list(Bouquet.objects.filter(is_available=True))
+def get_compositions(event=None, min_price=0, max_price=9999999):
+    predefined_events = {"wedding", "march8", "teacher", "no_reason"}
+    if not event or event not in predefined_events:
+        return list(Bouquet.objects.filter(is_available=True, price__gte=min_price, price__lte=max_price))
     
     matching_bouquets = set()
-    comps = Composition.objects.filter(event=event, is_available=True)
+    comps = Composition.objects.filter(event__contains=event, is_available=True)
     for c in comps:
-        for b in c.bouquets.filter(is_available=True):
+        for b in c.bouquets.filter(is_available=True, price__gte=min_price, price__lte=max_price):
             matching_bouquets.add(b)
     return list(matching_bouquets)
 

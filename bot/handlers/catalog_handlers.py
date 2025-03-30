@@ -1,21 +1,25 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
+from django.conf import settings
 from bot.logic.order_flow import start_bouquets, start_compositions
+from bot.message_tools import safe_delete_message
 
 def handle_budget_selection(update: Update, context: CallbackContext):
-    """Обработка выбора бюджета"""
+    """Обработка выбора бюджета."""
     query = update.callback_query
-    data = query.data 
+    data = query.data
 
     if data == "any":
         min_price, max_price = 0, 9999999
+    elif data == "more":
+        min_price, max_price = 2000, 9999999
     else:
         budget = int(data)
         min_price = max(0, budget - 500)
         max_price = budget
 
     event = context.user_data.get("event")
-    if event in ["march8", "wedding", "teacher", "no_reason"]:
+    if event and event.lower() in ["wedding", "march8", "teacher", "no_reason", "birthday", "school", "custom"]:
         bouquets = start_compositions(event)
     else:
         bouquets = start_bouquets(min_price, max_price)
@@ -30,51 +34,59 @@ def handle_budget_selection(update: Update, context: CallbackContext):
     show_current_bouquet(update, context)
 
 def show_current_bouquet(update: Update, context: CallbackContext):
-    """
-    Отображает текущий букет:
-      - Удаляет старое сообщение.
-      - Отправляет новое сообщение с информацией о букете.
-    """
-    query = update.callback_query
+    """Показывает букет — работает и после callback, и после text-сообщения."""
+    chat_id = None
+    if update.callback_query:
+        query = update.callback_query
+        chat_id = query.message.chat_id
+        safe_delete_message(query)
+    elif update.message:
+        chat_id = update.message.chat_id
+
+    if not chat_id:
+        return
+
     idx = context.user_data["current_bouquet"]
-    bouquet_obj = context.user_data["bouquets"][idx]
+    bouquet = context.user_data["bouquets"][idx]
+
+    poetic = bouquet.poetic_text.strip() if getattr(bouquet, "poetic_text", "") else ""
+    poetic = f"<i>{poetic}</i>\n\n" if poetic else ""
 
     caption_text = (
-        f"💐 {bouquet_obj.name}\n"
-        f"Цена: {bouquet_obj.price} ₽\n"
-        f"{bouquet_obj.description or ''}\n\n"
-        "Хотите заказать этот букет или посмотреть следующий?"
+        f"<b>{bouquet.name}</b>\n"
+        f"<i>Цена:</i> {bouquet.price} ₽\n\n"
+        f"{poetic}"
+        f"{bouquet.description or 'Описание отсутствует.'}\n\n"
+        "<b>Хотите заказать этот букет или посмотреть следующий?</b>"
     )
 
-    try:
-        query.delete_message()
-    except Exception:
-        pass
+    buttons = [
+        [InlineKeyboardButton("✅ Заказать", callback_data="start_order")],
+        [InlineKeyboardButton("➡️ Следующий букет", callback_data="show_catalog")],
+        [InlineKeyboardButton("📞 Консультация", callback_data="request_consult")]
+    ]
+    markup = InlineKeyboardMarkup(buttons)
 
-    if bouquet_obj.photo:
-        photo_path = bouquet_obj.photo.path
-        with open(photo_path, 'rb') as f:
+    if bouquet.photo:
+        photo_path = f"{settings.MEDIA_ROOT}/{bouquet.photo.name}"
+        with open(photo_path, "rb") as photo:
             context.bot.send_photo(
-                chat_id=query.message.chat_id,
-                photo=f,
+                chat_id=chat_id,
+                photo=photo,
                 caption=caption_text,
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Заказать", callback_data="start_order")],
-                    [InlineKeyboardButton("➡️ Следующий букет", callback_data="show_catalog")]
-                ])
+                parse_mode="HTML",
+                reply_markup=markup
             )
     else:
         context.bot.send_message(
-            chat_id=query.message.chat_id,
+            chat_id=chat_id,
             text=caption_text,
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Заказать", callback_data="start_order")],
-                [InlineKeyboardButton("➡️ Следующий букет", callback_data="show_catalog")]
-            ])
+            parse_mode="HTML",
+            reply_markup=markup
         )
 
 def handle_catalog(update: Update, context: CallbackContext):
-    """Показ следующего букета в каталоге."""
+    """Показ следующего букета из списка."""
     context.user_data["current_bouquet"] += 1
     bouquets = context.user_data["bouquets"]
     context.user_data["current_bouquet"] %= len(bouquets)

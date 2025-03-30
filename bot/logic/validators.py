@@ -22,22 +22,23 @@ def validate_phone(phone: str) -> bool:
     except phonenumbers.NumberParseException:
         return False
 
-def normalize_datetime(datetime_str: str) -> datetime:
-    print(f"[DEBUG] Введено время доставки: {datetime_str}")
-    datetime_str = datetime_str.strip().lower()
+def normalize_datetime(dt_input) -> datetime:
+    if isinstance(dt_input, datetime):
+        if dt_input.tzinfo is None:
+            return KRASNOYARSK_TZ.localize(dt_input)
+        return dt_input
+
+    datetime_str = dt_input.strip().lower()
 
     try:
         dt = datetime.fromisoformat(datetime_str)
-        print(f"[DEBUG] Парсинг ISO: {dt}")
         return KRASNOYARSK_TZ.localize(dt)
     except ValueError:
         pass
 
     try:
         dt = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
-        dt = KRASNOYARSK_TZ.localize(dt)
-        print(f"[DEBUG] Парсинг даты с точкой: {dt}")
-        return dt
+        return KRASNOYARSK_TZ.localize(dt)
     except ValueError:
         pass
 
@@ -47,7 +48,6 @@ def normalize_datetime(datetime_str: str) -> datetime:
             time_obj = datetime.strptime(time_part, "%H:%M").time()
             now = datetime.now(KRASNOYARSK_TZ)
             dt = now.replace(hour=time_obj.hour, minute=time_obj.minute, second=0, microsecond=0)
-            print(f"[DEBUG] Парсинг 'сегодня': {dt}")
             return dt
         except ValueError:
             pass
@@ -58,7 +58,6 @@ def normalize_datetime(datetime_str: str) -> datetime:
             time_obj = datetime.strptime(time_part, "%H:%M").time()
             now = datetime.now(KRASNOYARSK_TZ) + timedelta(days=1)
             dt = now.replace(hour=time_obj.hour, minute=time_obj.minute, second=0, microsecond=0)
-            print(f"[DEBUG] Парсинг 'завтра': {dt}")
             return dt
         except ValueError:
             pass
