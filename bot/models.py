@@ -37,17 +37,6 @@ class Composition(models.Model):
         return f"{self.name} ({self.price}₽) — {self.get_event_display()}"
 
 
-class OrderItem(models.Model):
-    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    product = GenericForeignKey('content_type', 'object_id')
-    quantity = models.PositiveIntegerField(default=1, verbose_name='Количество')
-
-    def __str__(self):
-        return f"{self.product} (x{self.quantity})"
-
-
 class Order(models.Model):
     PAYMENT_CHOICES = [
         ('cash', 'Наличные'),
@@ -71,11 +60,27 @@ class Order(models.Model):
     payment_method = models.CharField('Способ оплаты:', max_length=10, choices=PAYMENT_CHOICES, default='cash')
     status = models.CharField('Статус заказа:', max_length=15, choices=STATUS_CHOICES, default='accepted')
 
+    def calculate_total(self):
+        total = sum(item.product.price * item.quantity for item in self.items.all())
+        self.order_total = total
+        self.save()
+
     def __str__(self):
         return f"Заказ #{self.id} - {self.customer_name} ({self.get_status_display()})"
 
     def get_items(self):
         return self.items.all()
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    product = GenericForeignKey('content_type', 'object_id')
+    quantity = models.PositiveIntegerField(default=1, verbose_name='Количество')
+
+    def __str__(self):
+        return f"{self.product} (x{self.quantity})"
 
 
 class Consultation(models.Model):
