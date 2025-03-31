@@ -1,3 +1,4 @@
+from bot.exceptions import InvalidPhoneError
 from datetime import datetime, timedelta
 import phonenumbers
 import pytz
@@ -10,10 +11,16 @@ def normalize_phone(phone: str) -> str:
     phone = re.sub(r"[^\d+]", "", phone)
     if phone.startswith("8") and not phone.startswith("+"):
         phone = "+7" + phone[1:]
-    phone_number = phonenumbers.parse(phone, "RU")
-    formatted = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
-    print(f"[DEBUG] normalize_phone: {phone} -> {formatted}")
-    return formatted
+
+    try:
+        phone_number = phonenumbers.parse(phone, "RU")
+    except phonenumbers.NumberParseException:
+        raise InvalidPhoneError("Неверный формат номера. Пример: +79991234567")
+
+    if not phonenumbers.is_valid_number(phone_number):
+        raise InvalidPhoneError("Неверный формат номера. Пример: +79991234567")
+
+    return phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
 
 def validate_phone(phone: str) -> bool:
     try:
