@@ -7,5 +7,5 @@ def safe_delete_message(query):
             query.message.delete()
     except BadRequest:
         pass
-    except Exception as e:
-        print(f"[Ошибка удаления сообщения] {e}")
+    except Exception:
+        pass

@@ -4,6 +4,7 @@ from django.conf import settings
 from bot.logic.order_flow import start_bouquets, start_compositions
 from bot.message_tools import safe_delete_message
 
+
 def handle_budget_selection(update: Update, context: CallbackContext):
     """Обработка выбора бюджета."""
     query = update.callback_query
@@ -20,7 +21,7 @@ def handle_budget_selection(update: Update, context: CallbackContext):
 
     event = context.user_data.get("event")
     if event and event.lower() in ["wedding", "march8", "teacher", "no_reason", "birthday", "school", "custom"]:
-        bouquets = start_compositions(event)
+        bouquets = start_compositions(event, min_price, max_price)
     else:
         bouquets = start_bouquets(min_price, max_price)
 
@@ -33,8 +34,31 @@ def handle_budget_selection(update: Update, context: CallbackContext):
 
     show_current_bouquet(update, context)
 
+
+def handle_full_collection(update: Update, context: CallbackContext):
+    """Показывает всю коллекцию букетов по текущей категории без ограничений по бюджету."""
+    query = update.callback_query
+    query.answer()
+
+    event = context.user_data.get("event")
+
+    if event and event.lower() in ["wedding", "no_reason", "birthday", "school", "custom"]:
+        bouquets = start_compositions(event, min_price=0, max_price=9999999)
+    else:
+        bouquets = start_bouquets(min_price=0, max_price=9999999)
+
+    if not bouquets:
+        query.edit_message_text("😔 Нет букетов в коллекции.")
+        return
+
+    context.user_data["bouquets"] = bouquets
+    context.user_data["current_bouquet"] = 0
+
+    show_current_bouquet(update, context)
+
+
 def show_current_bouquet(update: Update, context: CallbackContext):
-    """Показывает букет — работает и после callback, и после text-сообщения."""
+    """Показывает букет с описанием и дополнительными кнопками."""
     chat_id = None
     if update.callback_query:
         query = update.callback_query
@@ -46,8 +70,14 @@ def show_current_bouquet(update: Update, context: CallbackContext):
     if not chat_id:
         return
 
-    idx = context.user_data["current_bouquet"]
-    bouquet = context.user_data["bouquets"][idx]
+    idx = context.user_data.get("current_bouquet", 0)
+    bouquets = context.user_data.get("bouquets", [])
+
+    if not bouquets:
+        context.bot.send_message(chat_id=chat_id, text="⚠️ Нет доступных букетов.")
+        return
+
+    bouquet = bouquets[idx % len(bouquets)]
 
     poetic = bouquet.poetic_text.strip() if getattr(bouquet, "poetic_text", "") else ""
     poetic = f"<i>{poetic}</i>\n\n" if poetic else ""
@@ -56,16 +86,18 @@ def show_current_bouquet(update: Update, context: CallbackContext):
         f"<b>{bouquet.name}</b>\n"
         f"<i>Цена:</i> {bouquet.price} ₽\n\n"
         f"{poetic}"
-        f"{bouquet.description or 'Описание отсутствует.'}\n\n"
-        "<b>Хотите заказать этот букет или посмотреть следующий?</b>"
+        f"{bouquet.description or 'Описание отсутствует.'}"
     )
 
-    buttons = [
-        [InlineKeyboardButton("✅ Заказать", callback_data="start_order")],
+    main_buttons = [
+        [InlineKeyboardButton("✅ Заказать букет", callback_data="start_order")],
         [InlineKeyboardButton("➡️ Следующий букет", callback_data="show_catalog")],
-        [InlineKeyboardButton("📞 Консультация", callback_data="request_consult")]
     ]
-    markup = InlineKeyboardMarkup(buttons)
+
+    bottom_buttons = [
+        [InlineKeyboardButton("🌸 Посмотреть всю коллекцию", callback_data="show_full_collection")],
+        [InlineKeyboardButton("📞 Заказать консультацию", callback_data="request_consult")]
+    ]
 
     if bouquet.photo:
         photo_path = f"{settings.MEDIA_ROOT}/{bouquet.photo.name}"
@@ -75,15 +107,23 @@ def show_current_bouquet(update: Update, context: CallbackContext):
                 photo=photo,
                 caption=caption_text,
                 parse_mode="HTML",
-                reply_markup=markup
+                reply_markup=InlineKeyboardMarkup(main_buttons)
             )
     else:
         context.bot.send_message(
             chat_id=chat_id,
             text=caption_text,
             parse_mode="HTML",
-            reply_markup=markup
+            reply_markup=InlineKeyboardMarkup(main_buttons)
         )
+
+    context.bot.send_message(
+        chat_id=chat_id,
+        text="<b>Хотите что-то еще более уникальное?</b> Подберите другой букет из нашей коллекции или закажите консультацию флориста",
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(bottom_buttons)
+    )
+
 
 def handle_catalog(update: Update, context: CallbackContext):
     """Показ следующего букета из списка."""
