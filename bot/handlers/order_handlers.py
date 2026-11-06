@@ -112,14 +112,8 @@ def process_order_step(update: Update, context: CallbackContext):
         update.message.reply_text(f"❌ {e}\nПожалуйста, повторите ввод.")
         return
 
-    except OrderSaveError as e:
-        log_unexpected_error("Ошибка сохранения заказа", str(e))
+    except OrderSaveError:
         update.message.reply_text("⚠️ Не удалось сохранить заказ. Попробуйте позже.")
-        return
-
-    except Exception as e:
-        log_unexpected_error(f"Неожиданная ошибка в process_order_step (шаг {step})", str(e))
-        update.message.reply_text("❌ Что-то пошло не так. Попробуйте позже.")
         return
 
 

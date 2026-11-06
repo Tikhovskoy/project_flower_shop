@@ -4,7 +4,6 @@ from .keyboards import generate_event_keyboard, generate_budget_keyboard
 from bot.message_tools import safe_delete_message
 from bot.handlers.order_handlers import process_order_step
 from bot.handlers.consult_handlers import process_consult_request
-from bot.logging_tools import log_unexpected_error
 
 
 DEFAULT_REPLY = "Я вас не понял. Нажмите /start, чтобы начать заново."
@@ -38,21 +37,17 @@ def handle_event_selection(update: Update, context: CallbackContext):
 
 def handle_messages(update: Update, context: CallbackContext):
     """Обработка текстовых сообщений: телефон, повод, заказ или дефолт."""
-    try:
-        if context.user_data.get("awaiting_phone"):
-            process_consult_request(update, context)
-        elif context.user_data.get("awaiting_custom_event"):
-            custom_event = update.message.text.strip()
-            context.user_data["event"] = custom_event
-            context.user_data.pop("awaiting_custom_event", None)
-            update.message.reply_text(
-                text="💰 На какую сумму рассчитываете?",
-                reply_markup=generate_budget_keyboard()
-            )
-        elif "order_step" in context.user_data:
-            process_order_step(update, context)
-        else:
-            update.message.reply_text(DEFAULT_REPLY)
-    except Exception as e:
-        log_unexpected_error("Ошибка в handle_messages", e)
+    if context.user_data.get("awaiting_phone"):
+        process_consult_request(update, context)
+    elif context.user_data.get("awaiting_custom_event"):
+        custom_event = update.message.text.strip()
+        context.user_data["event"] = custom_event
+        context.user_data.pop("awaiting_custom_event", None)
+        update.message.reply_text(
+            text="💰 На какую сумму рассчитываете?",
+            reply_markup=generate_budget_keyboard()
+        )
+    elif "order_step" in context.user_data:
+        process_order_step(update, context)
+    else:
         update.message.reply_text(DEFAULT_REPLY)

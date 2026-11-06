@@ -27,5 +27,6 @@ def log_validation_error(context: str, exception: Exception):
     logger.warning(f"[Валидация] {context} — {exception}")
 
 
-def log_unexpected_error(context: str, exception: Exception):
-    logger.error(f"[Ошибка] {context} — {exception}")
+def log_unexpected_error(context: str, exception: BaseException):
+    """Пишет ошибку вместе с трассировкой, если она у исключения есть."""
+    logger.error(f"[Ошибка] {context} — {exception}", exc_info=exception)

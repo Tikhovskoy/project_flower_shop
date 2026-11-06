@@ -5,8 +5,8 @@ from bot.logic.consultation_flow import request_consultation
 from bot.handlers.catalog_handlers import show_current_bouquet
 from bot.logic.order_flow import start_bouquets
 from bot.message_tools import safe_delete_message
-from bot.logging_tools import log_validation_error, log_unexpected_error
-from bot.exceptions import InvalidPhoneError
+from bot.logging_tools import log_validation_error
+from bot.exceptions import ConsultationSaveError, InvalidPhoneError
 
 
 def handle_consult_request(update: Update, context: CallbackContext):
@@ -62,8 +62,8 @@ def process_consult_request(update: Update, context: CallbackContext):
         log_validation_error("Неверный номер телефона", e)
         update.message.reply_text("❌ Неверный формат номера. Пример: +79991234567")
 
-    except Exception as e:
-        log_unexpected_error("Неожиданная ошибка в process_consult_request", e)
+    except ConsultationSaveError:
+        update.message.reply_text("⚠️ Не удалось сохранить заявку. Попробуйте позже.")
 
 
 
