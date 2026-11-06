@@ -24,9 +24,14 @@ ignore = [
     "RUF001",
     "RUF002",
     "RUF003",
+    # Django и DRF по соглашению задают настройки (fields, choices, permission_classes)
+    # списками в атрибутах класса, ClassVar тут только мешает
+    "RUF012",
 ]
 
 [tool.ruff.lint.per-file-ignores]
+# django.setup() обязан выполниться до импорта хендлеров, которые обращаются к моделям
+"bot/main_bot.py" = ["E402"]
 # Тесты проверяют и «неправильные» значения, а MagicMock позволяет компактные присваивания
 "tests/*" = ["B017", "SIM117"]
 

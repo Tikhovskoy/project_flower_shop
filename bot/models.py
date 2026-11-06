@@ -65,13 +65,13 @@ class Order(models.Model):
     )
     delivery_time = models.DateTimeField("Время доставки", blank=True, null=True)
 
+    def __str__(self):
+        return f"Заказ #{self.id} - {self.customer_name} ({self.get_status_display()})"
+
     def calculate_total(self):
         total = sum(item.product.price * item.quantity for item in self.items.all())
         self.order_total = total
         self.save()
-
-    def __str__(self):
-        return f"Заказ #{self.id} - {self.customer_name} ({self.get_status_display()})"
 
     def get_items(self):
         return self.items.all()
