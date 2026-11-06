@@ -46,7 +46,7 @@ class CompositionViewSet(viewsets.ModelViewSet):
     queryset = Composition.objects.all()
     serializer_class = CompositionSerializer
     permission_classes = [IsAdminOrReadOnly]
-    filterset_fields = ['is_available', 'price', 'event']
+    filterset_fields = ['is_available', 'event']
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
 
     def get_queryset(self):
