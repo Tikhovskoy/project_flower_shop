@@ -1,4 +1,5 @@
 from bot.models import Bouquet, Composition, Order, OrderItem, Consultation
+from django.db import transaction
 from django.utils.timezone import make_aware
 from django.contrib.contenttypes.models import ContentType
 from datetime import datetime
@@ -43,26 +44,27 @@ def save_order(order_data: dict):
         if delivery_time and delivery_time.tzinfo is None:
             delivery_time = make_aware(delivery_time, pytz.timezone("Asia/Krasnoyarsk"))
 
-        order = Order.objects.create(
-            customer_name=order_data.get("customer_name", ""),
-            phone_number=order_data.get("phone_number", ""),
-            delivery_address=order_data.get("delivery_address", ""),
-            postcard=order_data.get("card_text", ""),
-            delivery_time=delivery_time,
-            status=order_data.get("status", "new"),
-        )
+        with transaction.atomic():
+            order = Order.objects.create(
+                customer_name=order_data.get("customer_name", ""),
+                phone_number=order_data.get("phone_number", ""),
+                delivery_address=order_data.get("delivery_address", ""),
+                postcard=order_data.get("card_text", ""),
+                delivery_time=delivery_time,
+                status=order_data.get("status", "new"),
+            )
 
-        bouquet = Bouquet.objects.get(id=order_data["bouquet_id"])
-        content_type = ContentType.objects.get_for_model(bouquet)
+            bouquet = Bouquet.objects.get(id=order_data["bouquet_id"])
+            content_type = ContentType.objects.get_for_model(bouquet)
 
-        OrderItem.objects.create(
-            order=order,
-            content_type=content_type,
-            object_id=bouquet.id,
-            quantity=1
-        )
+            OrderItem.objects.create(
+                order=order,
+                content_type=content_type,
+                object_id=bouquet.id,
+                quantity=1
+            )
 
-        order.calculate_total()
+            order.calculate_total()
 
     except Exception as e:
         log_unexpected_error("Ошибка при сохранении заказа в save_order", e)
