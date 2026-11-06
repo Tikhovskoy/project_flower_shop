@@ -130,11 +130,8 @@ venv\Scripts\activate.bat # Windows
 # 3. Установка зависимостей
 pip install -r requirements.txt
 
-# 4. Создаём .env и прописываем токен
+# 4. Создаём .env из шаблона и подставляем свои значения (см. «Переменные окружения» ниже)
 cp .env.example .env
-# TELEGRAM_TOKEN=...
-# COURIER_ID=...
-# FLORIST_ID=...
 
 # 5. Применяем миграции
 python manage.py migrate
@@ -145,6 +142,28 @@ python manage.py runserver
 # 7. Запускаем бота
 python -m bot.main_bot
 ```
+
+---
+
+### Переменные окружения
+
+Настройки читаются из `.env` в корне проекта (шаблон — `.env.example`) или из переменных
+окружения; уже заданные переменные окружения файлом `.env` не перезаписываются.
+
+| Переменная | По умолчанию | Назначение |
+|---|---|---|
+| `SECRET_KEY` | — | Секретный ключ Django. Обязателен при `DEBUG=False`, иначе `ImproperlyConfigured`. При `DEBUG=True` без ключа берётся временный случайный |
+| `DEBUG` | `False` | Режим отладки |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Допустимые хосты через запятую |
+| `TELEGRAM_TOKEN` | — | Токен бота от @BotFather |
+| `COURIER_ID` | — | Telegram ID курьера, ему уходят заказы |
+| `FLORIST_ID` | — | Telegram ID флориста, ему уходят заявки на консультацию |
+| `HTTPS_ONLY` | `False` | Редирект на HTTPS, защищённые cookie и HSTS для продакшена |
+| `TRUST_PROXY_SSL_HEADER` | `False` | Доверять `X-Forwarded-Proto` обратного прокси |
+| `CSRF_TRUSTED_ORIGINS` | — | Доверенные источники для CSRF через запятую (нужны за прокси по HTTPS) |
+
+Проверка продакшен-настроек: `python manage.py check --deploy` не выдаёт предупреждений при
+`DEBUG=False`, длинном `SECRET_KEY` и `HTTPS_ONLY=True`.
 
 ---
 
