@@ -122,7 +122,10 @@ def show_current_bouquet(update: Update, context: CallbackContext):
 
     context.bot.send_message(
         chat_id=chat_id,
-        text="<b>Хотите что-то еще более уникальное?</b> Подберите другой букет из нашей коллекции или закажите консультацию флориста",
+        text=(
+            "<b>Хотите что-то еще более уникальное?</b> "
+            "Подберите другой букет из нашей коллекции или закажите консультацию флориста"
+        ),
         parse_mode="HTML",
         reply_markup=InlineKeyboardMarkup(bottom_buttons),
     )

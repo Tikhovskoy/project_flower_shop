@@ -19,7 +19,7 @@ class TestAnonymousCannotTouchPrivateData:
         url = template.format(order=order, consultation=consultation)
         assert anon_client.get(url).status_code in DENIED
 
-    @pytest.mark.parametrize("url", PRIVATE_LISTS + ["/api/order/create/"])
+    @pytest.mark.parametrize("url", [*PRIVATE_LISTS, "/api/order/create/"])
     def test_cannot_create(self, db, anon_client, url):
         payload = {"customer_name": "x", "name": "x", "phone_number": "+79990000000"}
         assert anon_client.post(url, payload, format="json").status_code in DENIED
