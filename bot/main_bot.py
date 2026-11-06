@@ -25,6 +25,7 @@ from bot.handlers.catalog_handlers import (
 )
 
 from bot.handlers.consult_handlers import handle_consult_request
+from bot.handlers.errors import handle_error
 from bot.handlers.order_handlers import handle_order_start, handle_card_choice
 
 def main():
@@ -44,6 +45,7 @@ def main():
     dispatcher.add_handler(CallbackQueryHandler(handle_card_choice, pattern="^(add_card_yes|add_card_no)$"))
     dispatcher.add_handler(CallbackQueryHandler(handle_consult_request, pattern="^request_consult$"))
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_messages))
+    dispatcher.add_error_handler(handle_error)
 
     updater.start_polling()
     updater.idle()

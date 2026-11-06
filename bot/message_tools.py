@@ -1,11 +1,10 @@
-from telegram.error import BadRequest
+from contextlib import suppress
+
+from telegram.error import TelegramError
+
 
 def safe_delete_message(query):
-    """Пытается удалить сообщение, игнорируя ошибки."""
-    try:
-        if query.message:
+    """Удаляет сообщение с кнопкой; ошибки Telegram (уже удалено, нет прав, сеть) не критичны."""
+    if query.message:
+        with suppress(TelegramError):
             query.message.delete()
-    except BadRequest:
-        pass
-    except Exception:
-        pass
