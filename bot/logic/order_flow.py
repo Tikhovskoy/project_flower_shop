@@ -1,7 +1,11 @@
-from .data_access import get_bouquets, save_order, get_compositions
-from .validators import validate_phone, normalize_phone, normalize_datetime
-from bot.logging_tools import log_validation_error, log_unexpected_error
-from bot.exceptions import InvalidPhoneError, InvalidDateTimeError, OrderSaveError 
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DatabaseError
+
+from bot.exceptions import InvalidDateTimeError, InvalidPhoneError, OrderSaveError
+from bot.logging_tools import log_unexpected_error, log_validation_error
+
+from .data_access import get_bouquets, get_compositions, save_order
+from .validators import normalize_datetime, normalize_phone
 
 
 def start_bouquets(min_price: int = 0, max_price: int = 9999999):
@@ -17,7 +21,7 @@ def create_order(bouquet):
         "bouquet_id": bouquet.id,
         "bouquet_name": bouquet.name,
         "price": bouquet.price,
-        "status": "new"
+        "status": "accepted",
     }
 
 
@@ -29,17 +33,13 @@ def add_card_text(order_data: dict, card_text: str):
 def set_contact_info(order_data: dict, customer_name: str, address: str, phone: str, delivery_time: str):
     try:
         normalized_phone = normalize_phone(phone)
-    except Exception as e:
+    except InvalidPhoneError as e:
         log_validation_error("Ошибка normalize_phone", e)
-        raise InvalidPhoneError("Неверный формат номера телефона.")
-
-    if not validate_phone(normalized_phone):
-        log_validation_error("validate_phone вернул False", Exception("Невалидный номер"))
-        raise InvalidPhoneError("Неверный формат номера телефона.")
+        raise
 
     normalized_time = normalize_datetime(delivery_time)
     if not normalized_time:
-        log_validation_error("normalize_datetime вернул None", Exception("Невалидная дата"))
+        log_validation_error("normalize_datetime вернул None", ValueError(f"Невалидная дата: {delivery_time!r}"))
         raise InvalidDateTimeError("Неверный формат времени доставки. Пример: '2025-03-27T14:00'.")
 
     order_data.update({
@@ -50,11 +50,11 @@ def set_contact_info(order_data: dict, customer_name: str, address: str, phone: 
     })
     return order_data
 
+
 def confirm_order(order_data: dict) -> dict:
     try:
-        order_data["status"] = order_data.get("status", "confirmed")
         save_order(order_data)
-        return order_data
-    except Exception as e:
+    except (DatabaseError, ObjectDoesNotExist) as e:
         log_unexpected_error("Ошибка в confirm_order при сохранении заказа", e)
-        raise OrderSaveError("Не удалось сохранить заказ.")
+        raise OrderSaveError("Не удалось сохранить заказ.") from e
+    return order_data
