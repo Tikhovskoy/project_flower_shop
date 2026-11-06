@@ -48,3 +48,37 @@ jobs:
 
       - name: pytest
         run: pytest --cov
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t flower-shop:ci .
+
+      - name: Start web container
+        run: |
+          docker run -d --name shop -p 8000:8000 \
+            -e SECRET_KEY=ci-only-key-not-used-anywhere-else \
+            -e SERVE_MEDIA=True \
+            flower-shop:ci \
+            sh -c "python manage.py migrate --noinput && python manage.py load_demo && exec gunicorn FlowerShopBot.wsgi:application --bind 0.0.0.0:8000"
+
+      - name: Smoke test admin, static files and media
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS -o /dev/null http://localhost:8000/admin/login/ && break
+            sleep 1
+          done
+          curl -fsS -o /dev/null http://localhost:8000/admin/login/
+          curl -fsS -o /dev/null http://localhost:8000/static/admin/css/base.css
+          curl -fsS -o /dev/null http://localhost:8000/media/bouquets/demo-01.jpg
+          curl -fsS http://localhost:8000/api/bouquets/ | grep -q "Первый луч"
+
+      - name: Container runs as non-root
+        run: test "$(docker exec shop id -u)" != "0"
+
+      - name: Container logs
+        if: always()
+        run: docker logs shop
