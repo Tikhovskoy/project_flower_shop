@@ -7,33 +7,29 @@ import pytz
 from bot.logging_tools import log_unexpected_error
 
 
-def get_bouquets(min_price=0, max_price=9999999):
-    return list(Bouquet.objects.filter(
-        is_available=True,
-        price__gte=min_price,
-        price__lte=max_price
-    ))
+def _in_price_range(bouquets, min_price, max_price):
+    """Ограничивает выборку по цене; None вместо границы означает «без ограничения»."""
+    if min_price is not None:
+        bouquets = bouquets.filter(price__gte=min_price)
+    if max_price is not None:
+        bouquets = bouquets.filter(price__lte=max_price)
+    return bouquets
 
 
-def get_compositions(event=None, min_price=0, max_price=9999999):
-    if not event:
-        return list(Bouquet.objects.filter(
-            is_available=True,
-            price__gte=min_price,
-            price__lte=max_price
-        ))
+def get_bouquets(min_price=0, max_price=None):
+    available = Bouquet.objects.filter(is_available=True)
+    return list(_in_price_range(available, min_price, max_price).order_by('id'))
 
-    matching_bouquets = set()
-    compositions = Composition.objects.filter(event=event, is_available=True)
-    for composition in compositions:
-        for bouquet in composition.bouquets.filter(
-            is_available=True,
-            price__gte=min_price,
-            price__lte=max_price
-        ):
-            matching_bouquets.add(bouquet)
 
-    return list(matching_bouquets)
+def get_compositions(event=None, min_price=0, max_price=None):
+    """Букеты из доступных композиций события; без события — весь каталог."""
+    bouquets = Bouquet.objects.filter(is_available=True)
+    if event:
+        bouquets = bouquets.filter(
+            compositions__event=event,
+            compositions__is_available=True,
+        ).distinct()
+    return list(_in_price_range(bouquets, min_price, max_price).order_by('id'))
 
 
 def save_order(order_data: dict):
