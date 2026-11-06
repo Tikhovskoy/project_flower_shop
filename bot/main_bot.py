@@ -1,32 +1,23 @@
 import os
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'FlowerShopBot.settings')
 import django
+
 django.setup()
 
 from django.conf import settings
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    CallbackQueryHandler,
-    MessageHandler,
-    Filters
-)
-
-from bot.handlers.start_handlers import (
-    handle_start,
-    handle_event_selection,
-    handle_messages
-)
+from telegram.ext import CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
 
 from bot.handlers.catalog_handlers import (
     handle_budget_selection,
     handle_catalog,
-    handle_full_collection
+    handle_full_collection,
 )
-
 from bot.handlers.consult_handlers import handle_consult_request
 from bot.handlers.errors import handle_error
-from bot.handlers.order_handlers import handle_order_start, handle_card_choice
+from bot.handlers.order_handlers import handle_card_choice, handle_order_start
+from bot.handlers.start_handlers import handle_event_selection, handle_messages, handle_start
+
 
 def main():
     if not settings.TELEGRAM_TOKEN:

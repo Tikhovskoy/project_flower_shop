@@ -1,12 +1,13 @@
 from django.conf import settings
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext
+
+from bot.exceptions import InvalidDateTimeError, InvalidPhoneError, OrderSaveError
+from bot.logging_tools import log_unexpected_error, log_validation_error
 from bot.logic.order_draft import OrderDraft
-from bot.logic.order_flow import create_order, confirm_order
-from bot.message_tools import safe_delete_message
-from bot.logging_tools import log_validation_error, log_unexpected_error
-from bot.exceptions import InvalidPhoneError, InvalidDateTimeError, OrderSaveError
+from bot.logic.order_flow import confirm_order, create_order
 from bot.logic.validators import normalize_datetime
+from bot.message_tools import safe_delete_message
 
 
 def handle_order_start(update: Update, context: CallbackContext):

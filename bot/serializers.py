@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Bouquet, Composition, Order, OrderItem, Consultation
+
+from .models import Bouquet, Composition, Consultation, Order, OrderItem
 
 
 class BouquetSerializer(serializers.ModelSerializer):

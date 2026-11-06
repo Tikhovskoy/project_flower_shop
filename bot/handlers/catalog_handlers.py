@@ -1,6 +1,7 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CallbackContext
 from django.conf import settings
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import CallbackContext
+
 from bot.logic.order_flow import start_bouquets, start_compositions
 from bot.message_tools import safe_delete_message
 from bot.models import Composition

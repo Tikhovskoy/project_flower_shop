@@ -1,7 +1,8 @@
+from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
-from django.conf import settings
-from .models import Bouquet, Composition, Order, Consultation, OrderItem
+
+from .models import Bouquet, Composition, Consultation, Order, OrderItem
 
 
 class BouquetAdmin(admin.ModelAdmin):
@@ -65,7 +66,7 @@ class OrderAdmin(admin.ModelAdmin):
             if product and hasattr(product, 'name'):
                 item_strings.append(f"{product.name} (x{item.quantity})")
             else:
-                item_strings.append(f"❌ Товар не найден")
+                item_strings.append("❌ Товар не найден")
         return ", ".join(item_strings) if item_strings else "–"
 
 
