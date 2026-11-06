@@ -1,10 +1,18 @@
-from bot.exceptions import InvalidPhoneError
+import re
 from datetime import datetime, timedelta
+
 import phonenumbers
 import pytz
-import re
+
+from bot.exceptions import InvalidPhoneError
 
 KRASNOYARSK_TZ = pytz.timezone('Asia/Krasnoyarsk')
+
+INVALID_PHONE_MESSAGE = "Неверный формат номера. Пример: +79991234567"
+
+# Слова вместо даты и сдвиг в днях от сегодняшнего дня
+RELATIVE_DAYS = {"сегодня": 0, "завтра": 1}
+
 
 def normalize_phone(phone: str) -> str:
     phone = phone.strip()
@@ -14,60 +22,67 @@ def normalize_phone(phone: str) -> str:
 
     try:
         phone_number = phonenumbers.parse(phone, "RU")
-    except phonenumbers.NumberParseException:
-        raise InvalidPhoneError("Неверный формат номера. Пример: +79991234567")
+    except phonenumbers.NumberParseException as exc:
+        raise InvalidPhoneError(INVALID_PHONE_MESSAGE) from exc
 
     if not phonenumbers.is_valid_number(phone_number):
-        raise InvalidPhoneError("Неверный формат номера. Пример: +79991234567")
+        raise InvalidPhoneError(INVALID_PHONE_MESSAGE)
 
     return phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
+
 
 def validate_phone(phone: str) -> bool:
     try:
         phone_number = phonenumbers.parse(phone, "RU")
-        return phonenumbers.is_valid_number(phone_number)
     except phonenumbers.NumberParseException:
         return False
+    return phonenumbers.is_valid_number(phone_number)
 
-def normalize_datetime(dt_input) -> datetime:
-    if isinstance(dt_input, datetime):
-        if dt_input.tzinfo is None:
-            return KRASNOYARSK_TZ.localize(dt_input)
-        return dt_input
 
-    datetime_str = dt_input.strip().lower()
+def _with_timezone(moment: datetime) -> datetime:
+    """Время без часового пояса считаем красноярским, с поясом — оставляем как есть."""
+    if moment.tzinfo is None:
+        return KRASNOYARSK_TZ.localize(moment)
+    return moment
 
-    try:
-        dt = datetime.fromisoformat(datetime_str)
-        return KRASNOYARSK_TZ.localize(dt)
-    except ValueError:
-        pass
 
-    try:
-        dt = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
-        return KRASNOYARSK_TZ.localize(dt)
-    except ValueError:
-        pass
-
-    if "сегодня" in datetime_str:
+def _parse_relative_day(text: str) -> datetime | None:
+    """«сегодня 14:00», «завтра 09:30»."""
+    for word, days in RELATIVE_DAYS.items():
+        if word not in text:
+            continue
         try:
-            time_part = datetime_str.replace("сегодня", "").strip()
-            time_obj = datetime.strptime(time_part, "%H:%M").time()
-            now = datetime.now(KRASNOYARSK_TZ)
-            dt = now.replace(hour=time_obj.hour, minute=time_obj.minute, second=0, microsecond=0)
-            return dt
+            time_of_day = datetime.strptime(text.replace(word, "").strip(), "%H:%M").time()
         except ValueError:
-            pass
-
-    if "завтра" in datetime_str:
-        try:
-            time_part = datetime_str.replace("завтра", "").strip()
-            time_obj = datetime.strptime(time_part, "%H:%M").time()
-            now = datetime.now(KRASNOYARSK_TZ) + timedelta(days=1)
-            dt = now.replace(hour=time_obj.hour, minute=time_obj.minute, second=0, microsecond=0)
-            return dt
-        except ValueError:
-            pass
-
-    print("[DEBUG] Неверный формат времени доставки.")
+            return None
+        day = datetime.now(KRASNOYARSK_TZ) + timedelta(days=days)
+        return day.replace(
+            hour=time_of_day.hour, minute=time_of_day.minute, second=0, microsecond=0
+        )
     return None
+
+
+def normalize_datetime(dt_input) -> datetime | None:
+    """Приводит ввод к datetime с часовым поясом или возвращает None, если формат не распознан.
+
+    Понимает datetime, ISO-строки (в том числе со смещением), «dd.mm.yyyy hh:mm»,
+    а также «сегодня hh:mm» и «завтра hh:mm».
+    """
+    if isinstance(dt_input, datetime):
+        return _with_timezone(dt_input)
+    if not isinstance(dt_input, str):
+        return None
+
+    text = dt_input.strip()
+
+    try:
+        return _with_timezone(datetime.fromisoformat(text))
+    except ValueError:
+        pass
+
+    try:
+        return _with_timezone(datetime.strptime(text, "%d.%m.%Y %H:%M"))
+    except ValueError:
+        pass
+
+    return _parse_relative_day(text.lower())
