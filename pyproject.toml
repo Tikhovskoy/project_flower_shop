@@ -39,6 +39,10 @@ ignore = [
 DJANGO_SETTINGS_MODULE = "FlowerShopBot.settings"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+filterwarnings = [
+    # WhiteNoise предупреждает, что STATIC_ROOT ещё не создан collectstatic; в тестах это нормально
+    "ignore:No directory at:UserWarning",
+]
 # Settings читают SECRET_KEY при импорте, поэтому тестовый ключ задаётся до загрузки Django.
 env = ["SECRET_KEY=test-only-secret-key-not-for-production"]
 
