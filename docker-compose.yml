@@ -1,0 +1,41 @@
+# Запуск: cp .env.example .env, заполнить значения, затем docker compose up --build
+x-app: &app
+  build: .
+  image: flower-shop:local
+  env_file: .env
+  environment:
+    # База и загруженные фото лежат в томе и переживают пересборку образа
+    DATABASE_PATH: /data/db.sqlite3
+    MEDIA_ROOT: /data/media
+    SERVE_MEDIA: "True"
+  volumes:
+    - app-data:/data
+
+services:
+  web:
+    <<: *app
+    # Миграции применяются до старта сервера, поэтому открытый порт значит «база готова»
+    command:
+      - sh
+      - -c
+      - 'python manage.py migrate --noinput && exec gunicorn FlowerShopBot.wsgi:application --bind 0.0.0.0:8000 --workers 2 --access-logfile -'
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), 2).close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  bot:
+    <<: *app
+    command: python -m bot.main_bot
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  app-data:

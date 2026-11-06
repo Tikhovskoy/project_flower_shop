@@ -1,29 +1,37 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CallbackContext
 from django.conf import settings
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import CallbackContext
+
 from bot.logic.order_flow import start_bouquets, start_compositions
 from bot.message_tools import safe_delete_message
+from bot.models import Composition
+
+KNOWN_EVENTS = {code for code, _label in Composition.EVENT_CHOICES}
+
+
+def price_range_for(choice: str) -> tuple[int, int | None]:
+    """Диапазон цен по кнопке бюджета; None вместо верхней границы — без ограничения."""
+    if choice == "any":
+        return 0, None
+    if choice == "more":
+        return 2000, None
+    budget = int(choice)
+    return max(0, budget - 500), budget
+
+
+def find_bouquets(event: str | None, min_price: int, max_price: int | None):
+    """Букеты по событию, если оно из известных, иначе весь каталог."""
+    if event and event.lower() in KNOWN_EVENTS:
+        return start_compositions(event.lower(), min_price, max_price)
+    return start_bouquets(min_price, max_price)
 
 
 def handle_budget_selection(update: Update, context: CallbackContext):
     """Обработка выбора бюджета."""
     query = update.callback_query
-    data = query.data
+    min_price, max_price = price_range_for(query.data)
 
-    if data == "any":
-        min_price, max_price = 0, 9999999
-    elif data == "more":
-        min_price, max_price = 2000, 9999999
-    else:
-        budget = int(data)
-        min_price = max(0, budget - 500)
-        max_price = budget
-
-    event = context.user_data.get("event")
-    if event and event.lower() in ["wedding", "march8", "teacher", "no_reason", "birthday", "school", "custom"]:
-        bouquets = start_compositions(event, min_price, max_price)
-    else:
-        bouquets = start_bouquets(min_price, max_price)
+    bouquets = find_bouquets(context.user_data.get("event"), min_price, max_price)
 
     if not bouquets:
         query.edit_message_text("😔 Нет букетов в этом диапазоне.")
@@ -40,12 +48,7 @@ def handle_full_collection(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
-    event = context.user_data.get("event")
-
-    if event and event.lower() in ["wedding", "no_reason", "birthday", "school", "custom"]:
-        bouquets = start_compositions(event, min_price=0, max_price=9999999)
-    else:
-        bouquets = start_bouquets(min_price=0, max_price=9999999)
+    bouquets = find_bouquets(context.user_data.get("event"), 0, None)
 
     if not bouquets:
         query.edit_message_text("😔 Нет букетов в коллекции.")
@@ -96,7 +99,7 @@ def show_current_bouquet(update: Update, context: CallbackContext):
 
     bottom_buttons = [
         [InlineKeyboardButton("🌸 Посмотреть всю коллекцию", callback_data="show_full_collection")],
-        [InlineKeyboardButton("📞 Заказать консультацию", callback_data="request_consult")]
+        [InlineKeyboardButton("📞 Заказать консультацию", callback_data="request_consult")],
     ]
 
     if bouquet.photo:
@@ -107,21 +110,24 @@ def show_current_bouquet(update: Update, context: CallbackContext):
                 photo=photo,
                 caption=caption_text,
                 parse_mode="HTML",
-                reply_markup=InlineKeyboardMarkup(main_buttons)
+                reply_markup=InlineKeyboardMarkup(main_buttons),
             )
     else:
         context.bot.send_message(
             chat_id=chat_id,
             text=caption_text,
             parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup(main_buttons)
+            reply_markup=InlineKeyboardMarkup(main_buttons),
         )
 
     context.bot.send_message(
         chat_id=chat_id,
-        text="<b>Хотите что-то еще более уникальное?</b> Подберите другой букет из нашей коллекции или закажите консультацию флориста",
+        text=(
+            "<b>Хотите что-то еще более уникальное?</b> "
+            "Подберите другой букет из нашей коллекции или закажите консультацию флориста"
+        ),
         parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(bottom_buttons)
+        reply_markup=InlineKeyboardMarkup(bottom_buttons),
     )
 
 

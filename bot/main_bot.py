@@ -1,54 +1,57 @@
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'FlowerShopBot.settings')
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "FlowerShopBot.settings")
 import django
+
 django.setup()
 
-from dotenv import load_dotenv
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    CallbackQueryHandler,
-    MessageHandler,
-    Filters
-)
-
-from bot.handlers.start_handlers import (
-    handle_start,
-    handle_event_selection,
-    handle_messages
-)
+from django.conf import settings
+from telegram.ext import CallbackQueryHandler, CommandHandler, Filters, MessageHandler, Updater
 
 from bot.handlers.catalog_handlers import (
     handle_budget_selection,
     handle_catalog,
-    handle_full_collection
+    handle_full_collection,
 )
-
 from bot.handlers.consult_handlers import handle_consult_request
-from bot.handlers.order_handlers import handle_order_start, handle_card_choice
+from bot.handlers.errors import handle_error
+from bot.handlers.order_handlers import handle_card_choice, handle_order_start
+from bot.handlers.start_handlers import handle_event_selection, handle_messages, handle_start
+
 
 def main():
-    load_dotenv()
-    token = os.getenv("TELEGRAM_TOKEN")
-    if not token:
-        raise RuntimeError("TELEGRAM_TOKEN не найден в .env файле")
+    if not settings.TELEGRAM_TOKEN:
+        raise RuntimeError("TELEGRAM_TOKEN не задан: укажите его в .env или переменных окружения")
 
-    updater = Updater(token=token)
+    updater = Updater(token=settings.TELEGRAM_TOKEN)
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", handle_start))
-    dispatcher.add_handler(CallbackQueryHandler(handle_event_selection,
-                                                pattern="^(birthday|wedding|school|no_reason|custom)$"))
-    dispatcher.add_handler(CallbackQueryHandler(handle_budget_selection, pattern=r"^(500|1000|2000|more|any)$"))
-    dispatcher.add_handler(CallbackQueryHandler(handle_full_collection, pattern="^show_full_collection$"))
+    dispatcher.add_handler(
+        CallbackQueryHandler(
+            handle_event_selection, pattern="^(birthday|wedding|school|no_reason|custom)$"
+        )
+    )
+    dispatcher.add_handler(
+        CallbackQueryHandler(handle_budget_selection, pattern=r"^(500|1000|2000|more|any)$")
+    )
+    dispatcher.add_handler(
+        CallbackQueryHandler(handle_full_collection, pattern="^show_full_collection$")
+    )
     dispatcher.add_handler(CallbackQueryHandler(handle_catalog, pattern="^show_catalog$"))
     dispatcher.add_handler(CallbackQueryHandler(handle_order_start, pattern="^start_order$"))
-    dispatcher.add_handler(CallbackQueryHandler(handle_card_choice, pattern="^(add_card_yes|add_card_no)$"))
-    dispatcher.add_handler(CallbackQueryHandler(handle_consult_request, pattern="^request_consult$"))
+    dispatcher.add_handler(
+        CallbackQueryHandler(handle_card_choice, pattern="^(add_card_yes|add_card_no)$")
+    )
+    dispatcher.add_handler(
+        CallbackQueryHandler(handle_consult_request, pattern="^request_consult$")
+    )
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_messages))
+    dispatcher.add_error_handler(handle_error)
 
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == "__main__":
     main()

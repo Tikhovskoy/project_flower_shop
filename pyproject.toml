@@ -1,0 +1,55 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Миграции генерирует Django, их не правим руками
+extend-exclude = ["bot/migrations"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle: ошибки
+    "W",    # pycodestyle: предупреждения
+    "F",    # pyflakes
+    "I",    # порядок импортов
+    "B",    # flake8-bugbear
+    "UP",   # современный синтаксис Python
+    "C4",   # генераторы и comprehensions
+    "SIM",  # упрощение конструкций
+    "BLE",  # запрет голого except Exception
+    "DJ",   # Django
+    "RUF",  # специфичные правила Ruff
+]
+ignore = [
+    # Русский текст в строках, комментариях и docstring: кириллические буквы
+    # визуально совпадают с латинскими, и эти правила дают ложные срабатывания
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    # Django и DRF по соглашению задают настройки (fields, choices, permission_classes)
+    # списками в атрибутах класса, ClassVar тут только мешает
+    "RUF012",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# django.setup() обязан выполниться до импорта хендлеров, которые обращаются к моделям
+"bot/main_bot.py" = ["E402"]
+# Тесты проверяют и «неправильные» значения, а MagicMock позволяет компактные присваивания
+"tests/*" = ["B017", "SIM117"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "FlowerShopBot.settings"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    # WhiteNoise предупреждает, что STATIC_ROOT ещё не создан collectstatic; в тестах это нормально
+    "ignore:No directory at:UserWarning",
+]
+# Settings читают SECRET_KEY при импорте, поэтому тестовый ключ задаётся до загрузки Django.
+env = ["SECRET_KEY=test-only-secret-key-not-for-production"]
+
+[tool.coverage.run]
+source = ["bot/logic"]
+
+[tool.coverage.report]
+# Бизнес-логика бота (bot/logic) должна быть покрыта не ниже 80%
+fail_under = 80
+show_missing = true

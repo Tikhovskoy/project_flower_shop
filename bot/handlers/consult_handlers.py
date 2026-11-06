@@ -1,12 +1,13 @@
-import os
+from django.conf import settings
 from telegram import Update
 from telegram.ext import CallbackContext
-from bot.logic.consultation_flow import request_consultation
+
+from bot.exceptions import ConsultationSaveError, InvalidPhoneError
 from bot.handlers.catalog_handlers import show_current_bouquet
+from bot.logging_tools import log_validation_error
+from bot.logic.consultation_flow import request_consultation
 from bot.logic.order_flow import start_bouquets
 from bot.message_tools import safe_delete_message
-from bot.logging_tools import log_validation_error, log_unexpected_error
-from bot.exceptions import InvalidPhoneError
 
 
 def handle_consult_request(update: Update, context: CallbackContext):
@@ -19,9 +20,10 @@ def handle_consult_request(update: Update, context: CallbackContext):
     safe_delete_message(query)
     context.bot.send_message(
         chat_id=query.message.chat_id,
-        text="📱 Укажите номер телефона для связи с флористом (в течение 20 минут вам перезвонят):"
+        text="📱 Укажите номер телефона для связи с флористом (в течение 20 минут вам перезвонят):",
     )
     context.user_data["awaiting_phone"] = True
+
 
 def process_consult_request(update: Update, context: CallbackContext):
     phone = update.message.text.strip()
@@ -29,18 +31,16 @@ def process_consult_request(update: Update, context: CallbackContext):
 
     try:
         consultation_data = request_consultation(
-            phone=phone,
-            user_id=user.id,
-            name=user.full_name or user.username or "(без имени)"
+            phone=phone, user_id=user.id, name=user.full_name or user.username or "(без имени)"
         )
 
-        florist_id = os.getenv("FLORIST_ID")
+        florist_id = settings.FLORIST_ID
         if florist_id:
             context.bot.send_message(
                 chat_id=florist_id,
                 text=f"📞 Новая консультация:\n"
-                     f"Имя: {consultation_data['name']}\n"
-                     f"Телефон: {consultation_data['phone']}"
+                f"Имя: {consultation_data['name']}\n"
+                f"Телефон: {consultation_data['phone']}",
             )
 
         update.message.reply_text(
@@ -62,10 +62,5 @@ def process_consult_request(update: Update, context: CallbackContext):
         log_validation_error("Неверный номер телефона", e)
         update.message.reply_text("❌ Неверный формат номера. Пример: +79991234567")
 
-    except Exception as e:
-        log_unexpected_error("Неожиданная ошибка в process_consult_request", e)
-
-
-
-
-        
+    except ConsultationSaveError:
+        update.message.reply_text("⚠️ Не удалось сохранить заявку. Попробуйте позже.")
