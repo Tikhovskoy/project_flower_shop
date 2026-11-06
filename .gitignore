@@ -1,54 +1,47 @@
-# Python-related ignores
+# Python
 *.pyc
 *.pyo
 *.pyd
 __pycache__/
 *.DS_Store
 
-# Virtual environment
+# Виртуальное окружение
 venv/
 env/
 ENV/
 .venv/
 .VENV/
 
-# Django-related ignores
-db.sqlite3
+# Django: база данных, загруженные файлы, собранная статика
 *.sqlite3
-migrations/
-media/
-staticfiles/
-static/
-files/
-images/
-uploads/
+/media/
+/staticfiles/
+/static/
 
-# Logs and debugging related ignores
+# Логи
 *.log
 logs/
-debug.log
 
-# Environment settings
+# Секреты и настройки окружения (шаблон .env.example остаётся в репозитории)
+.env
 *.env
+!.env.example
 
-# VS Code related ignores
-.vscode/
-
-# Pytest and testing related ignores
+# Тесты, покрытие, линтеры
 htmlcov/
 .coverage
+coverage.xml
 .cache
 .pytest_cache/
+.ruff_cache/
 pytestdebug.log
 
-# Idea (PyCharm/IntelliJ) related ignores
+# Редакторы
+.vscode/
 .idea/
 
-# Ignore Python wheel packages
+# Сборка пакетов
 *.egg
 *.egg-info/
 dist/
 build/
-
-# Microsoft Office documents (for briefing)
-briefing/*.docx
