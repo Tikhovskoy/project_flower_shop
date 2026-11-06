@@ -1,7 +1,8 @@
 from django.conf import settings
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext
-from bot.logic.order_flow import create_order, add_card_text, set_contact_info, confirm_order
+from bot.logic.order_draft import OrderDraft
+from bot.logic.order_flow import create_order, confirm_order
 from bot.message_tools import safe_delete_message
 from bot.logging_tools import log_validation_error, log_unexpected_error
 from bot.exceptions import InvalidPhoneError, InvalidDateTimeError, OrderSaveError
@@ -54,7 +55,7 @@ def process_order_step(update: Update, context: CallbackContext):
 
     try:
         if step == "card_text":
-            add_card_text(order_data, text)
+            order_data.add_card_text(text)
             context.user_data["order_step"] = "name"
             update.message.reply_text("👤 Как вас зовут?")
             return
@@ -90,8 +91,7 @@ def process_order_step(update: Update, context: CallbackContext):
                 return
 
         elif step == "phone":
-            order = set_contact_info(
-                order_data,
+            order = order_data.set_contact_info(
                 customer_name=context.user_data["customer_name"],
                 address=context.user_data["address"],
                 phone=text,
@@ -123,24 +123,11 @@ def process_order_step(update: Update, context: CallbackContext):
         return
 
 
-def send_order_to_courier(context: CallbackContext, order_data: dict):
+def send_order_to_courier(context: CallbackContext, order: OrderDraft):
     """Отправляет заказ курьеру."""
     courier_id = settings.COURIER_ID
     if not courier_id:
         log_unexpected_error("Отсутствует COURIER_ID в .env", Exception("COURIER_ID is not set"))
         return
 
-    text = (
-        "🚚 Новый заказ!\n\n"
-        f"💐 Букет: {order_data['bouquet_name']}\n"
-        f"💰 Цена: {order_data['price']}₽\n"
-        f"👤 Получатель: {order_data['customer_name']}\n"
-        f"🏡 Адрес: {order_data['delivery_address']}\n"
-        f"📅 Время доставки: {order_data['delivery_time'].strftime('%d.%m %H:%M')}\n"
-        f"📞 Телефон: {order_data['phone_number']}\n"
-    )
-
-    if order_data.get("card_text"):
-        text += f"\n💌 Открытка: {order_data['card_text']}"
-
-    context.bot.send_message(chat_id=courier_id, text=text)
+    context.bot.send_message(chat_id=courier_id, text=order.courier_message())

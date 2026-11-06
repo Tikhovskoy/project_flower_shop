@@ -5,6 +5,7 @@ import pytz
 from django.db import DatabaseError
 
 from bot.logic.data_access import get_bouquets, get_compositions, save_consultation, save_order
+from bot.logic.order_draft import OrderDraft
 from bot.models import Bouquet, Consultation, Order
 
 pytestmark = pytest.mark.django_db
@@ -123,49 +124,40 @@ class TestGetCompositions:
 
 class TestSaveOrder:
     @pytest.fixture
-    def order_data(self, catalog):
-        return {
-            "bouquet_id": catalog["mid"].id,
-            "bouquet_name": "Средний",
-            "price": 1000,
-            "customer_name": "Анна",
-            "delivery_address": "ул. Тестовая, 1",
-            "phone_number": "+79131234567",
-            "delivery_time": KRASNOYARSK.localize(datetime(2025, 3, 28, 14, 0)),
-            "card_text": "С днём рождения!",
-            "status": "accepted",
-        }
+    def draft(self, catalog):
+        return OrderDraft(
+            bouquet_id=catalog["mid"].id,
+            bouquet_name="Средний",
+            price=1000,
+            customer_name="Анна",
+            delivery_address="ул. Тестовая, 1",
+            phone_number="+79131234567",
+            delivery_time=KRASNOYARSK.localize(datetime(2025, 3, 28, 14, 0)),
+            card_text="С днём рождения!",
+        )
 
-    def test_creates_order_with_item_and_total(self, order_data, catalog):
-        save_order(order_data)
+    def test_creates_order_with_item_and_total(self, draft, catalog):
+        order = save_order(draft)
 
-        order = Order.objects.get()
+        assert Order.objects.get() == order
         assert (order.customer_name, order.phone_number) == ("Анна", "+79131234567")
         assert order.delivery_address == "ул. Тестовая, 1"
         assert order.postcard == "С днём рождения!"
+        assert order.status == "accepted"
         assert order.order_total == 1000
         item = order.items.get()
         assert (item.product, item.quantity) == (catalog["mid"], 1)
 
-    def test_naive_delivery_time_becomes_aware(self, order_data):
-        order_data["delivery_time"] = datetime(2025, 3, 28, 14, 0)
-
-        save_order(order_data)
+    def test_delivery_time_is_saved(self, draft):
+        save_order(draft)
 
         assert Order.objects.get().delivery_time == KRASNOYARSK.localize(datetime(2025, 3, 28, 14, 0))
 
-    def test_iso_string_delivery_time_is_accepted(self, order_data):
-        order_data["delivery_time"] = "2025-03-28T14:00"
-
-        save_order(order_data)
-
-        assert Order.objects.get().delivery_time == KRASNOYARSK.localize(datetime(2025, 3, 28, 14, 0))
-
-    def test_unknown_bouquet_leaves_no_half_saved_order(self, order_data):
-        order_data["bouquet_id"] = 999_999
+    def test_unknown_bouquet_leaves_no_half_saved_order(self, draft):
+        draft.bouquet_id = 999_999
 
         with pytest.raises(Bouquet.DoesNotExist):
-            save_order(order_data)
+            save_order(draft)
 
         assert Order.objects.count() == 0
 

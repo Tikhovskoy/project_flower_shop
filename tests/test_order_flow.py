@@ -1,14 +1,11 @@
-from datetime import datetime, timedelta
-
 import pytest
 from freezegun import freeze_time
 
-from bot.exceptions import InvalidDateTimeError, InvalidPhoneError, OrderSaveError
+from bot.exceptions import OrderSaveError
+from bot.logic.order_draft import OrderDraft
 from bot.logic.order_flow import (
-    add_card_text,
     confirm_order,
     create_order,
-    set_contact_info,
     start_bouquets,
     start_compositions,
 )
@@ -19,28 +16,17 @@ pytestmark = pytest.mark.django_db
 NOW_IN_KRASNOYARSK = "2025-03-27T03:00:00Z"  # 10:00 по Красноярску
 
 
-@pytest.fixture
-def order_data(bouquet):
-    return create_order(bouquet)
-
-
-def fill_contacts(order_data, **overrides):
-    values = {
-        "customer_name": "Анна",
-        "address": "ул. Тестовая, 1",
-        "phone": "8 (913) 123-45-67",
-        "delivery_time": "28.03.2025 14:00",
-    }
-    values.update(overrides)
-    return set_contact_info(order_data, **values)
-
-
 class TestCatalogEntryPoints:
     def test_start_bouquets_applies_price_range(self, make_bouquet):
         make_bouquet("Дешёвый", 400)
         make_bouquet("Дорогой", 3000)
 
         assert [b.name for b in start_bouquets(min_price=2000)] == ["Дорогой"]
+
+    def test_start_bouquets_has_no_upper_bound_by_default(self, make_bouquet):
+        make_bouquet("Эксклюзив", 15_000_000)
+
+        assert [b.name for b in start_bouquets()] == ["Эксклюзив"]
 
     def test_start_compositions_filters_by_event(self, make_bouquet, make_composition):
         wedding = make_bouquet("Свадебный", 3000)
@@ -50,75 +36,19 @@ class TestCatalogEntryPoints:
         assert [b.name for b in start_compositions("wedding")] == ["Свадебный"]
 
 
-class TestCreateOrder:
-    def test_copies_bouquet_data(self, bouquet):
-        order_data = create_order(bouquet)
+def test_create_order_returns_draft_for_the_bouquet(bouquet):
+    draft = create_order(bouquet)
 
-        assert order_data["bouquet_id"] == bouquet.id
-        assert order_data["bouquet_name"] == bouquet.name
-        assert order_data["price"] == bouquet.price
-
-    def test_new_order_has_a_status_the_admin_understands(self, order_data):
-        assert order_data["status"] in dict(Order.STATUS_CHOICES)
-
-
-class TestAddCardText:
-    def test_stores_text(self, order_data):
-        result = add_card_text(order_data, "С днём рождения!")
-
-        assert result["card_text"] == "С днём рождения!"
-
-    def test_returns_the_same_order(self, order_data):
-        assert add_card_text(order_data, "Привет") is order_data
-
-
-@freeze_time(NOW_IN_KRASNOYARSK)
-class TestSetContactInfo:
-    def test_stores_normalized_data(self, order_data):
-        result = fill_contacts(order_data)
-
-        assert result["customer_name"] == "Анна"
-        assert result["delivery_address"] == "ул. Тестовая, 1"
-        assert result["phone_number"] == "+79131234567"
-        assert result["delivery_time"].utcoffset() == timedelta(hours=7)
-        assert (result["delivery_time"].day, result["delivery_time"].hour) == (28, 14)
-
-    def test_accepts_datetime_as_delivery_time(self, order_data):
-        result = fill_contacts(order_data, delivery_time=datetime(2025, 3, 28, 9, 0))
-
-        assert result["delivery_time"].hour == 9
-
-    def test_invalid_phone_raises_and_changes_nothing(self, order_data):
-        with pytest.raises(InvalidPhoneError):
-            fill_contacts(order_data, phone="12345")
-
-        assert "phone_number" not in order_data
-        assert "customer_name" not in order_data
-
-    def test_invalid_time_raises_and_changes_nothing(self, order_data):
-        with pytest.raises(InvalidDateTimeError):
-            fill_contacts(order_data, delivery_time="когда-нибудь")
-
-        assert "delivery_time" not in order_data
-        assert "customer_name" not in order_data
-
-    def test_phone_is_checked_before_time(self, order_data):
-        with pytest.raises(InvalidPhoneError):
-            fill_contacts(order_data, phone="abc", delivery_time="тоже мусор")
-
-    def test_validation_errors_are_logged(self, order_data, caplog):
-        with pytest.raises(InvalidPhoneError), caplog.at_level("WARNING", logger="bot_logger"):
-            fill_contacts(order_data, phone="12345")
-
-        assert "Валидация" in caplog.text
+    assert isinstance(draft, OrderDraft)
+    assert draft.bouquet_id == bouquet.id
 
 
 @freeze_time(NOW_IN_KRASNOYARSK)
 class TestConfirmOrder:
     @pytest.fixture
-    def ready_order(self, order_data):
-        add_card_text(order_data, "С днём рождения!")
-        return fill_contacts(order_data)
+    def ready_order(self, bouquet):
+        draft = create_order(bouquet).add_card_text("С днём рождения!")
+        return draft.set_contact_info("Анна", "ул. Тестовая, 1", "8 (913) 123-45-67", "28.03.2025 14:00")
 
     def test_saves_order_to_database(self, ready_order, bouquet):
         result = confirm_order(ready_order)
@@ -151,3 +81,11 @@ class TestConfirmOrder:
             confirm_order(ready_order)
 
         assert isinstance(error.value.__cause__, Bouquet.DoesNotExist)
+
+    def test_failure_is_logged(self, ready_order, bouquet, caplog):
+        Bouquet.objects.filter(pk=bouquet.pk).delete()
+
+        with pytest.raises(OrderSaveError), caplog.at_level("ERROR", logger="bot_logger"):
+            confirm_order(ready_order)
+
+        assert "confirm_order" in caplog.text
