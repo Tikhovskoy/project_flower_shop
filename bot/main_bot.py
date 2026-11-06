@@ -3,7 +3,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'FlowerShopBot.settings')
 import django
 django.setup()
 
-from dotenv import load_dotenv
+from django.conf import settings
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -28,12 +28,10 @@ from bot.handlers.consult_handlers import handle_consult_request
 from bot.handlers.order_handlers import handle_order_start, handle_card_choice
 
 def main():
-    load_dotenv()
-    token = os.getenv("TELEGRAM_TOKEN")
-    if not token:
-        raise RuntimeError("TELEGRAM_TOKEN не найден в .env файле")
+    if not settings.TELEGRAM_TOKEN:
+        raise RuntimeError("TELEGRAM_TOKEN не задан: укажите его в .env или переменных окружения")
 
-    updater = Updater(token=token)
+    updater = Updater(token=settings.TELEGRAM_TOKEN)
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", handle_start))

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from FlowerShopBot import settings
+from django.conf import settings
 from .models import Bouquet, Composition, Order, Consultation, OrderItem
 
 

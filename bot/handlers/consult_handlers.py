@@ -1,4 +1,4 @@
-import os
+from django.conf import settings
 from telegram import Update
 from telegram.ext import CallbackContext
 from bot.logic.consultation_flow import request_consultation
@@ -34,7 +34,7 @@ def process_consult_request(update: Update, context: CallbackContext):
             name=user.full_name or user.username or "(без имени)"
         )
 
-        florist_id = os.getenv("FLORIST_ID")
+        florist_id = settings.FLORIST_ID
         if florist_id:
             context.bot.send_message(
                 chat_id=florist_id,
