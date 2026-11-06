@@ -1,4 +1,4 @@
-import os
+from django.conf import settings
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext
 from bot.logic.order_flow import create_order, add_card_text, set_contact_info, confirm_order
@@ -125,7 +125,7 @@ def process_order_step(update: Update, context: CallbackContext):
 
 def send_order_to_courier(context: CallbackContext, order_data: dict):
     """Отправляет заказ курьеру."""
-    courier_id = os.getenv("COURIER_ID")
+    courier_id = settings.COURIER_ID
     if not courier_id:
         log_unexpected_error("Отсутствует COURIER_ID в .env", Exception("COURIER_ID is not set"))
         return
