@@ -22,6 +22,9 @@ MANAGED_VARIABLES = [
     "HTTPS_ONLY",
     "TRUST_PROXY_SSL_HEADER",
     "SECURE_HSTS_SECONDS",
+    "DATABASE_PATH",
+    "MEDIA_ROOT",
+    "SERVE_MEDIA",
 ]
 
 # Длинный случайный ключ, чтобы проходила проверка security.W009
@@ -92,6 +95,28 @@ class TestHostsAndTelegramIds:
     def test_bot_token_comes_from_environment(self, load_settings):
         config = load_settings(SECRET_KEY="k", TELEGRAM_TOKEN="123:abc")
         assert config["TELEGRAM_TOKEN"] == "123:abc"
+
+
+class TestStoragePaths:
+    def test_paths_default_to_project_directory(self, load_settings):
+        config = load_settings(SECRET_KEY="k")
+
+        assert config["DATABASES"]["default"]["NAME"] == ROOT / "db.sqlite3"
+        assert config["MEDIA_ROOT"] == ROOT / "media"
+
+    def test_paths_come_from_environment(self, load_settings, tmp_path):
+        config = load_settings(
+            SECRET_KEY="k",
+            DATABASE_PATH=str(tmp_path / "data" / "shop.sqlite3"),
+            MEDIA_ROOT=str(tmp_path / "files"),
+        )
+
+        assert config["DATABASES"]["default"]["NAME"] == tmp_path / "data" / "shop.sqlite3"
+        assert config["MEDIA_ROOT"] == tmp_path / "files"
+
+    def test_serving_media_from_django_is_off_by_default(self, load_settings):
+        assert load_settings(SECRET_KEY="k")["SERVE_MEDIA"] is False
+        assert load_settings(SECRET_KEY="k", SERVE_MEDIA="True")["SERVE_MEDIA"] is True
 
 
 class TestHttpsSettings:
