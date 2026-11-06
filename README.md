@@ -1,19 +1,13 @@
-# project_flower_shop
+# FlowerShopBot
 
-## 1. Общая информация
+[![CI](https://github.com/Tikhovskoy/project_flower_shop/actions/workflows/ci.yml/badge.svg)](https://github.com/Tikhovskoy/project_flower_shop/actions/workflows/ci.yml)
 
-**FlowerShopBot** — Telegram-бот для онлайн-продажи букетов в Красноярске.  
-Бот обеспечивает удобный подбор и оформление заказа по шагам, валидацию данных и передачу заказов курьеру.
+Telegram-бот для онлайн-продажи «букетов со смыслом» в Красноярске. Помогает выбрать букет по
+событию и бюджету, оформляет заказ по шагам с проверкой данных, передаёт его курьеру и принимает
+заявки на консультацию флориста. Каталог, заказы и заявки ведутся в админке Django.
 
-### Функциональность:
-- Выбор букета по событию и бюджету
-- Пошаговое оформление заказа с валидацией данных
-- Добавление открытки
-- Запись консультаций для связи с флористом
-- Передача заказа курьеру через Telegram
-- Хранение данных о заказах и консультациях в базе данных через Django ORM
-
----
+Стек: Python 3.12, Django 4.2, Django REST Framework, python-telegram-bot 13, SQLite,
+pytest, ruff, Docker.
 
 ## Задача
 
@@ -42,110 +36,36 @@
 кабинет владельца (флористы, курьеры, отпуска, статистика), бот для ВКонтакте, автоматическое
 распределение заказов между доставщиками.
 
----
-
-## 2. Структура проекта
-
-```
-├── FlowerShopBot/            # Django-проект
-│   ├── settings.py           # Настройки (база, пути, installed_apps)
-│   └── urls.py               # URL-роутинг (в основном для админки)
-│
-├── bot/                      # Логика Telegram-бота
-│   ├── handlers/             # Хендлеры сообщений
-│   ├── logic/                # Бизнес-логика (валидация, обработка заказов)
-│   ├── main_bot.py           # Запуск бота
-│   ├── message_tools.py      # Безопасная работа с сообщениями
-│   ├── logging_tools.py      # Централизованное логирование
-│   ├── exceptions.py         # Кастомные исключения (валидация и ошибки)
-│   └── keyboards.py          # Генерация inline-кнопок
-│
-├── media/                    # Фото букетов, загружаемые через админку
-│   └── bouquets/
-│
-├── manage.py                 # Django CLI
-├── requirements.txt          # Зависимости проекта
-├── README.md                 # Документация
-└── .env                      # Секреты: токены, ID
-```
-
----
-
-## 3. Основные модули
-
-### 3.1 main_bot.py
-- Инициализация Django и токена Telegram
-- Настройка и регистрация всех хендлеров
-- Запуск `updater.start_polling()`
-
-### 3.2 Хендлеры `bot/handlers/`
-- `start_handlers.py` — `/start`, выбор начального сценария: букеты, событие, консультация
-- `catalog_handlers.py` — фильтрация по бюджету/событию, листание букетов
-- `order_handlers.py` — пошаговая обработка заказа (имя → адрес → дата → телефон)
-- `consult_handlers.py` — консультация, ввод телефона
-- `keyboards.py` — генерация inline-кнопок меню
-
-### 3.3 Логика `bot/logic/`
-- `order_flow.py`:
-  - `create_order`, `set_contact_info`, `confirm_order`
-  - Используются кастомные исключения: `InvalidPhoneError`, `InvalidDateTimeError`, `OrderSaveError`
-- `consultation_flow.py`:
-  - `request_consultation` — проверка номера, сохранение заявки
-- `validators.py`:
-  - `normalize_phone`, `validate_phone`, `normalize_datetime`
-  - Поддержка форматов: `сегодня 14:00`, `2025-03-27T14:00`, `dd.mm.yyyy hh:mm`
-- `data_access.py`:
-  - Слой доступа к данным Django: `get_bouquets`, `get_compositions`, `save_order`, `save_consultation`
-
----
-
-## 4. Валидация и логирование
-
-- Все ошибки валидации логируются через `logging_tools.py`, в файл `logs/bot.log`
-- Применяется `RotatingFileHandler`
-- Кастомные исключения:
-  - `InvalidPhoneError`
-  - `InvalidDateTimeError`
-  - `OrderSaveError`
-  - `ConsultationSaveError`
-  - `MissingRequiredFieldError`
-  - `UnknownOrderStepError`
-  - `MissingOrderDataError`
-  - `EmptyBouquetListError`
-- Обработка исключений централизована в хендлерах
-
----
-
-## 5. Настройка и запуск
+## Быстрый старт
 
 ```bash
-# 1. Клонируем репозиторий
-git clone ...
+git clone https://github.com/Tikhovskoy/project_flower_shop.git
+cd project_flower_shop
 
-# 2. Виртуальное окружение
-python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate.bat # Windows
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt   # для запуска без тестов хватит requirements.txt
 
-# 3. Установка зависимостей
-pip install -r requirements.txt
+cp .env.example .env             # Windows: copy .env.example .env
+# впишите в .env TELEGRAM_TOKEN, COURIER_ID и FLORIST_ID (см. «Переменные окружения»)
 
-# 4. Создаём .env из шаблона и подставляем свои значения (см. «Переменные окружения» ниже)
-cp .env.example .env
-
-# 5. Применяем миграции
 python manage.py migrate
+python manage.py load_demo       # вымышленный каталог: 8 букетов, 4 композиции
+python manage.py createsuperuser
+python manage.py runserver       # админка: http://127.0.0.1:8000/admin/
+```
 
-# 6. Запускаем Django-сервер (админка)
-python manage.py runserver
+Бот запускается отдельным процессом:
 
-# 7. Запускаем бота
+```bash
 python -m bot.main_bot
 ```
 
----
+Демо-каталог (`fixtures/demo.json`) содержит только букеты и композиции, без заказов и заявок.
+Картинки в `demo/media/` — сгенерированные заглушки; настоящие фото букетов загружаются через
+админку.
 
-### Переменные окружения
+## Переменные окружения
 
 Настройки читаются из `.env` в корне проекта (шаблон — `.env.example`) или из переменных
 окружения; уже заданные переменные окружения файлом `.env` не перезаписываются.
@@ -158,6 +78,9 @@ python -m bot.main_bot
 | `TELEGRAM_TOKEN` | — | Токен бота от @BotFather |
 | `COURIER_ID` | — | Telegram ID курьера, ему уходят заказы |
 | `FLORIST_ID` | — | Telegram ID флориста, ему уходят заявки на консультацию |
+| `DATABASE_PATH` | `db.sqlite3` в корне | Путь к файлу SQLite |
+| `MEDIA_ROOT` | `media/` в корне | Куда сохраняются загруженные фото |
+| `SERVE_MEDIA` | `False` | Отдавать `/media/` средствами Django при `DEBUG=False` (для демо, в проде лучше nginx) |
 | `HTTPS_ONLY` | `False` | Редирект на HTTPS, защищённые cookie и HSTS для продакшена |
 | `TRUST_PROXY_SSL_HEADER` | `False` | Доверять `X-Forwarded-Proto` обратного прокси |
 | `CSRF_TRUSTED_ORIGINS` | — | Доверенные источники для CSRF через запятую (нужны за прокси по HTTPS) |
@@ -165,80 +88,111 @@ python -m bot.main_bot
 Проверка продакшен-настроек: `python manage.py check --deploy` не выдаёт предупреждений при
 `DEBUG=False`, длинном `SECRET_KEY` и `HTTPS_ONLY=True`.
 
----
+## Запуск в Docker
 
-## 6. Админка Django
-
-Для удобного управления ассортиментом:
-
-### Что можно управлять через админку:
-- Букеты (`Bouquet`) — имя, цена, фото, описание, поэтический текст
-- Композиции (`Composition`) — событие, связанные букеты
-- Заказы (`Order`, `OrderItem`) — информация о клиенте и статус
-- Консультации (`Consultation`) — заявки на обратный звонок
-
-### Как попасть:
-- Создать суперпользователя:
-  ```bash
-  python manage.py createsuperuser
-  ```
-- Перейти в браузере:
-  ```
-  http://127.0.0.1:8000/admin/
-  ```
-
----
-
-## 7. Подключение базы данных
-
-### По умолчанию:
-Используется SQLite (в `settings.py`):
-
-```python
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-```
-
-### Для продакшена:
-Рекомендуется подключить PostgreSQL или другую СУБД:
-
-```python
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "flowerdb",
-        "USER": "botuser",
-        "PASSWORD": "securepassword",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
-}
-```
-
-Не забудь установить:
 ```bash
-pip install psycopg2-binary
+cp .env.example .env              # заполните TELEGRAM_TOKEN, COURIER_ID, FLORIST_ID
+docker compose up --build
+
+docker compose exec web python manage.py load_demo
+docker compose exec web python manage.py createsuperuser
 ```
 
----
+Админка: http://localhost:8000/admin/. Сервисы:
 
-## 8. Деплой (базовые шаги)
+- `web` — админка и API под gunicorn, перед стартом применяет миграции;
+- `bot` — Telegram-бот, стартует после того, как `web` готов.
 
-1. Поднять VPS или хостинг с поддержкой Python (например, Render, DigitalOcean, Railway)
-2. Установить Python, PostgreSQL
-3. Перенести файлы проекта
-4. Настроить `.env`, окружение и зависимости
-5. Настроить `supervisor` или `systemd` для запуска бота
-6. Настроить `nginx` + `gunicorn`, если будет использоваться веб-интерфейс или webhook
-7. Подключить домен/SSL, если требуется
+База и загруженные фото лежат в томе `app-data` и переживают пересборку образа
+(`docker compose down -v` удалит и том). Контейнеры работают от непривилегированного
+пользователя. В `.env.example` включён `DEBUG=True` для удобства: для настоящего развёртывания
+задайте `DEBUG=False` и длинный случайный `SECRET_KEY`.
 
----
+## Админка
 
-## 9. Контакты и поддержка
+В админке (`/admin/`) управляются букеты (название, цена, фото, состав, поэтический текст),
+композиции по событиям, заказы со статусами и заявки на консультацию.
 
-Проект создан в рамках практики.  
-Если будут вопросы — смело пиши!
+## API
+
+REST API нужен для внешних интеграций, сам бот им не пользуется и работает с базой через ORM.
+Вход — сессия Django (после входа в `/admin/`) или HTTP Basic.
+
+| Адрес | Аноним | Администратор (`is_staff`) |
+|---|---|---|
+| `/api/bouquets/`, `/api/compositions/` | только чтение | чтение и запись |
+| `/api/orders/`, `/api/consultations/` | 401/403 | чтение и запись |
+| `/api/order/create/` | 401/403 | создание заказа |
+
+Всё остальное закрыто по умолчанию (`IsAuthenticated`). Фильтры каталога: `min_price`,
+`max_price`, `is_available`; для композиций ещё `event` (цена композиции считается по её
+букетам) и `ordering`. Нечисловая цена и неизвестное событие дают ответ 400.
+
+## Тесты и качество кода
+
+```bash
+pytest --cov                 # тесты; порог покрытия bot/logic — 80%
+ruff check .                 # линтер
+ruff format --check .        # проверка форматирования
+python manage.py check
+python manage.py makemigrations --check --dry-run
+```
+
+Те же проверки выполняет GitHub Actions на каждый push в `main` и pull request, а ещё собирает
+Docker-образ и проверяет в нём админку, статику, media и API. Версии всех зависимостей,
+включая транзитивные, закреплены в `requirements.txt` и `requirements-dev.txt`.
+
+## Структура проекта
+
+```
+├── FlowerShopBot/            # Django-проект: настройки (из окружения), urls, wsgi
+├── bot/
+│   ├── handlers/             # Хендлеры Telegram: старт, каталог, заказ, консультация, ошибки
+│   ├── logic/                # Бизнес-логика без Telegram: валидаторы, OrderDraft, потоки заказа
+│   ├── management/commands/  # load_demo — загрузка демо-каталога
+│   ├── models.py             # Букет, композиция, заказ, консультация
+│   ├── filters.py            # FilterSet каталога для API
+│   ├── views.py, urls.py     # REST API
+│   ├── main_bot.py           # Запуск бота
+│   ├── message_tools.py      # Безопасное удаление сообщений
+│   ├── logging_tools.py      # Лог в logs/bot.log с ротацией
+│   └── exceptions.py         # Исключения предметной области
+├── fixtures/demo.json        # Демо-каталог
+├── demo/media/               # Картинки для демо-каталога
+├── tests/                    # pytest + pytest-django
+├── Dockerfile, docker-compose.yml
+└── .github/workflows/ci.yml
+```
+
+### Как устроен бот
+
+- `bot/logic/order_draft.py` — `OrderDraft`: заказ, который собирается по шагам. Сам проверяет
+  телефон и время (при ошибке не меняется) и собирает сообщение курьеру.
+- `bot/logic/validators.py` — нормализация телефона (в формат E.164) и времени доставки
+  (`2025-03-27T14:00`, `27.03.2025 14:00`, `сегодня 14:00`, `завтра 09:30`).
+- `bot/logic/data_access.py` — выборки каталога и сохранение заказа в транзакции.
+- Ошибки предметной области (`InvalidPhoneError`, `InvalidDateTimeError`, `OrderSaveError`,
+  `ConsultationSaveError`) обрабатываются в хендлерах; всё непредвиденное попадает в общий
+  обработчик `handle_error`, который пишет трассировку в лог и извиняется перед пользователем.
+
+## Мой вклад
+
+> Раздел составлен по `git log --author="Victor Tikhovskoi"` и `--author="Tikhovskoy"` и
+> **требует проверки владельцем репозитория**.
+
+Проект командный (два автора); всего в истории 61 коммит, у владельца репозитория 6 (март 2025):
+
+- старт проекта: структура, `.gitignore`, `.gitattributes`;
+- «Приведена логика Telegram-бота в соответствие с ТЗ»: хендлеры выбора события и бюджета,
+  каталога, заказа и консультации, клавиатуры, `main_bot`, логика заказа и консультации,
+  валидаторы, слой доступа к данным;
+- объединение веток («Вмержил оригинал»);
+- «Подготовка к деплою»: логирование с ротацией, валидация телефона и даты, собственные
+  исключения, чистка кода; в этом же коммите затронуты `models.py`, `admin.py` и миграции;
+- README и `requirements.txt`.
+
+Модели данных, админку и первый вариант REST API начинал второй автор. Это выводы по истории
+файлов, а не оценка вклада.
+
+Правки, подготовившие проект к публикации (безопасность, настройки из окружения, тесты, ruff, CI,
+Docker, демо-данные), сделаны отдельным pull request от имени владельца репозитория.
