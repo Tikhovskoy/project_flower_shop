@@ -46,6 +46,20 @@ class TestGetBouquets:
     def test_empty_range_gives_empty_list(self, catalog):
         assert get_bouquets(min_price=5000, max_price=6000) == []
 
+    def test_none_means_no_bound(self, catalog):
+        assert len(get_bouquets(min_price=None, max_price=None)) == 4
+
+    def test_no_hidden_price_ceiling(self, make_bouquet):
+        make_bouquet("Эксклюзив", 15_000_000)
+
+        assert names(get_bouquets()) == ["Эксклюзив"]
+        assert names(get_bouquets(max_price=None)) == ["Эксклюзив"]
+
+    def test_results_are_ordered_by_id(self, catalog):
+        ids = [bouquet.id for bouquet in get_bouquets()]
+
+        assert ids == sorted(ids)
+
     def test_returns_list(self, catalog):
         assert isinstance(get_bouquets(), list)
 
@@ -74,6 +88,18 @@ class TestGetCompositions:
 
     def test_price_range_applies_inside_event(self, compositions):
         assert names(get_compositions("birthday", 500, 1200)) == ["Средний"]
+
+    def test_none_means_no_upper_bound_inside_event(self, compositions, make_bouquet, make_composition):
+        make_composition("Эксклюзив", "gala", [make_bouquet("Эксклюзив", 15_000_000)])
+
+        assert names(get_compositions("gala", 0, None)) == ["Эксклюзив"]
+        assert names(get_compositions("birthday", 1000, None)) == ["Дорогой", "Средний"]
+
+    def test_result_is_stable_between_calls(self, compositions):
+        first = [bouquet.id for bouquet in get_compositions("birthday")]
+
+        assert first == [bouquet.id for bouquet in get_compositions("birthday")]
+        assert first == sorted(first)
 
     def test_unknown_event_gives_empty_list(self, compositions):
         assert get_compositions("school") == []

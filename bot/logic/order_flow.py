@@ -8,11 +8,11 @@ from .data_access import get_bouquets, get_compositions, save_order
 from .validators import normalize_datetime, normalize_phone
 
 
-def start_bouquets(min_price: int = 0, max_price: int = 9999999):
+def start_bouquets(min_price: int | None = 0, max_price: int | None = None):
     return get_bouquets(min_price, max_price)
 
 
-def start_compositions(event: str, min_price: int = 0, max_price: int = 9999999):
+def start_compositions(event: str, min_price: int | None = 0, max_price: int | None = None):
     return get_compositions(event, min_price, max_price)
 
 
