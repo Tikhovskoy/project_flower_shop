@@ -5,6 +5,24 @@ from bot.models import Bouquet, Composition, Consultation, Order
 
 
 @pytest.fixture
+def make_bouquet(db):
+    def make(name="Букет", price=1000, **kwargs):
+        return Bouquet.objects.create(name=name, price=price, **kwargs)
+
+    return make
+
+
+@pytest.fixture
+def make_composition(db):
+    def make(name="Композиция", event="birthday", bouquets=(), **kwargs):
+        composition = Composition.objects.create(name=name, event=event, **kwargs)
+        composition.bouquets.set(bouquets)
+        return composition
+
+    return make
+
+
+@pytest.fixture
 def bouquet(db):
     return Bouquet.objects.create(name="Облако", price=990, description="Хризантемы")
 
