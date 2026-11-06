@@ -29,7 +29,10 @@ class TestConsultationSaveErrors:
         assert isinstance(error.value.__cause__, DatabaseError)
 
     def test_database_error_is_logged(self, broken_database, caplog):
-        with pytest.raises(ConsultationSaveError), caplog.at_level(logging.ERROR, logger="bot_logger"):
+        with (
+            pytest.raises(ConsultationSaveError),
+            caplog.at_level(logging.ERROR, logger="bot_logger"),
+        ):
             request_consultation("+79131234567", user_id=1)
 
         assert "request_consultation" in caplog.text
@@ -48,7 +51,9 @@ class TestConsultationSaveErrors:
 
 
 class TestSafeDeleteMessage:
-    @pytest.mark.parametrize("error", [BadRequest("gone"), NetworkError("down"), TelegramError("?")])
+    @pytest.mark.parametrize(
+        "error", [BadRequest("gone"), NetworkError("down"), TelegramError("?")]
+    )
     def test_telegram_errors_are_ignored(self, error):
         query = MagicMock()
         query.message.delete.side_effect = error

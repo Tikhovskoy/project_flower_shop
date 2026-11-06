@@ -21,7 +21,7 @@ def request_consultation(phone: str, user_id: int, name: str = "(аноним)")
         "phone": normalized_phone,
         "user_id": user_id,
         "name": name,
-        "status": "new"
+        "status": "new",
     }
 
     try:

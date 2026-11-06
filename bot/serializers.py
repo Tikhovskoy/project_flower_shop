@@ -6,19 +6,19 @@ from .models import Bouquet, Composition, Consultation, Order, OrderItem
 class BouquetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bouquet
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CompositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Composition
-        fields = '__all__'
+        fields = "__all__"
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
-        fields = ['content_type', 'object_id', 'quantity']
+        fields = ["content_type", "object_id", "quantity"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -26,10 +26,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'customer_name', 'phone_number', 'delivery_address', 'items', 'postcard']
+        fields = ["id", "customer_name", "phone_number", "delivery_address", "items", "postcard"]
 
     def create(self, validated_data):
-        items_data = validated_data.pop('items', [])
+        items_data = validated_data.pop("items", [])
         order = Order.objects.create(**validated_data)
 
         for item_data in items_data:
@@ -38,8 +38,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
 
-
 class ConsultationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consultation
-        fields = '__all__'
+        fields = "__all__"

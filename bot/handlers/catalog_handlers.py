@@ -99,7 +99,7 @@ def show_current_bouquet(update: Update, context: CallbackContext):
 
     bottom_buttons = [
         [InlineKeyboardButton("🌸 Посмотреть всю коллекцию", callback_data="show_full_collection")],
-        [InlineKeyboardButton("📞 Заказать консультацию", callback_data="request_consult")]
+        [InlineKeyboardButton("📞 Заказать консультацию", callback_data="request_consult")],
     ]
 
     if bouquet.photo:
@@ -110,21 +110,21 @@ def show_current_bouquet(update: Update, context: CallbackContext):
                 photo=photo,
                 caption=caption_text,
                 parse_mode="HTML",
-                reply_markup=InlineKeyboardMarkup(main_buttons)
+                reply_markup=InlineKeyboardMarkup(main_buttons),
             )
     else:
         context.bot.send_message(
             chat_id=chat_id,
             text=caption_text,
             parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup(main_buttons)
+            reply_markup=InlineKeyboardMarkup(main_buttons),
         )
 
     context.bot.send_message(
         chat_id=chat_id,
         text="<b>Хотите что-то еще более уникальное?</b> Подберите другой букет из нашей коллекции или закажите консультацию флориста",
         parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup(bottom_buttons)
+        reply_markup=InlineKeyboardMarkup(bottom_buttons),
     )
 
 

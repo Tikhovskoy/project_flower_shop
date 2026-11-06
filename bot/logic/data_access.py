@@ -17,7 +17,7 @@ def _in_price_range(bouquets, min_price, max_price):
 
 def get_bouquets(min_price=0, max_price=None):
     available = Bouquet.objects.filter(is_available=True)
-    return list(_in_price_range(available, min_price, max_price).order_by('id'))
+    return list(_in_price_range(available, min_price, max_price).order_by("id"))
 
 
 def get_compositions(event=None, min_price=0, max_price=None):
@@ -28,7 +28,7 @@ def get_compositions(event=None, min_price=0, max_price=None):
             compositions__event=event,
             compositions__is_available=True,
         ).distinct()
-    return list(_in_price_range(bouquets, min_price, max_price).order_by('id'))
+    return list(_in_price_range(bouquets, min_price, max_price).order_by("id"))
 
 
 def save_order(draft: OrderDraft) -> Order:

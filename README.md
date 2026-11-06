@@ -196,9 +196,9 @@ python -m bot.main_bot
 
 ```python
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 ```
@@ -208,13 +208,13 @@ DATABASES = {
 
 ```python
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'flowerdb',
-        'USER': 'botuser',
-        'PASSWORD': 'securepassword',
-        'HOST': 'localhost',
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "flowerdb",
+        "USER": "botuser",
+        "PASSWORD": "securepassword",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 ```
