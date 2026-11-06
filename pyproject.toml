@@ -2,3 +2,5 @@
 DJANGO_SETTINGS_MODULE = "FlowerShopBot.settings"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+# Settings читают SECRET_KEY при импорте, поэтому тестовый ключ задаётся до загрузки Django.
+env = ["SECRET_KEY=test-only-secret-key-not-for-production"]
