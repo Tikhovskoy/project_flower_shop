@@ -135,6 +135,14 @@ class TestSaveOrder:
 
         assert Order.objects.get().delivery_time == KRASNOYARSK.localize(datetime(2025, 3, 28, 14, 0))
 
+    def test_unknown_bouquet_leaves_no_half_saved_order(self, order_data):
+        order_data["bouquet_id"] = 999_999
+
+        with pytest.raises(Bouquet.DoesNotExist):
+            save_order(order_data)
+
+        assert Order.objects.count() == 0
+
 
 class TestSaveConsultation:
     def test_saves_all_fields(self):
