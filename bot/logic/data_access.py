@@ -23,7 +23,7 @@ def get_compositions(event=None, min_price=0, max_price=9999999):
         ))
 
     matching_bouquets = set()
-    compositions = Composition.objects.filter(event=event)
+    compositions = Composition.objects.filter(event=event, is_available=True)
     for composition in compositions:
         for bouquet in composition.bouquets.filter(
             is_available=True,
