@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 import pytz
@@ -57,7 +57,7 @@ class TestNormalizeDatetime:
         assert (result.hour, result.minute) == (14, 0)
 
     def test_aware_datetime_is_returned_unchanged(self):
-        moment = datetime(2025, 3, 28, 14, 0, tzinfo=timezone.utc)
+        moment = datetime(2025, 3, 28, 14, 0, tzinfo=UTC)
 
         assert normalize_datetime(moment) is moment
 
@@ -102,7 +102,7 @@ class TestNormalizeDatetime:
     def test_iso_with_zulu_suffix_keeps_the_moment(self):
         result = normalize_datetime("2025-03-28T07:00:00Z")
 
-        assert result == datetime(2025, 3, 28, 7, 0, tzinfo=timezone.utc)
+        assert result == datetime(2025, 3, 28, 7, 0, tzinfo=UTC)
 
     @pytest.mark.parametrize("value", [None, 12345, 1.5])
     def test_non_string_input_returns_none_instead_of_crashing(self, value):

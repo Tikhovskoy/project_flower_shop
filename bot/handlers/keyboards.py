@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+
 def generate_event_keyboard():
     """
     Возвращает клавиатуру для выбора события.

@@ -6,5 +6,5 @@ class BotConfig(AppConfig):
     name = 'bot'
 
     def ready(self):
-        import bot.signals
+        from . import signals  # noqa: F401  (импорт нужен ради регистрации сигналов)
 

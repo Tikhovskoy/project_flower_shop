@@ -1,10 +1,11 @@
 from telegram import Update
 from telegram.ext import CallbackContext
-from .keyboards import generate_event_keyboard, generate_budget_keyboard
-from bot.message_tools import safe_delete_message
-from bot.handlers.order_handlers import process_order_step
-from bot.handlers.consult_handlers import process_consult_request
 
+from bot.handlers.consult_handlers import process_consult_request
+from bot.handlers.order_handlers import process_order_step
+from bot.message_tools import safe_delete_message
+
+from .keyboards import generate_budget_keyboard, generate_event_keyboard
 
 DEFAULT_REPLY = "Я вас не понял. Нажмите /start, чтобы начать заново."
 

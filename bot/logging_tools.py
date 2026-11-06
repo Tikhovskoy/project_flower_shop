@@ -1,6 +1,6 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import os
+from logging.handlers import RotatingFileHandler
 
 LOG_DIR = "logs"
 LOG_FILE = "bot.log"
