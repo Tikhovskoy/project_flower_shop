@@ -1,0 +1,171 @@
+[
+  {
+    "model": "bot.bouquet",
+    "pk": 1,
+    "fields": {
+      "name": "Первый луч",
+      "description": "Ромашки (9 шт.), крафтовая бумага, лента",
+      "price": 490,
+      "photo": "bouquets/demo-01.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Простота, в которой слышно лето."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 2,
+    "fields": {
+      "name": "Тихая радость",
+      "description": "Тюльпаны (11 шт.), атласная лента",
+      "price": 790,
+      "photo": "bouquets/demo-02.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Маленький праздник, который не нужно объяснять."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 3,
+    "fields": {
+      "name": "Облако",
+      "description": "Белые кустовые хризантемы (5 веток), эвкалипт",
+      "price": 990,
+      "photo": "bouquets/demo-03.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Лёгкость, с которой начинается хороший день."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 4,
+    "fields": {
+      "name": "Письмо без слов",
+      "description": "Кустовые пудровые розы (7 шт.), гипсофила, крафт",
+      "price": 1500,
+      "photo": "bouquets/demo-04.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Всё важное сказано, остаётся только вручить."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 5,
+    "fields": {
+      "name": "Вечерняя заря",
+      "description": "Пионовидные розы (5 шт.), эустома, зелень",
+      "price": 1890,
+      "photo": "bouquets/demo-05.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Нежность, которая не оставит равнодушным ни одно сердце."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 6,
+    "fields": {
+      "name": "Дом, где ждут",
+      "description": "Подсолнухи (9 шт.), эвкалипт, пшеница",
+      "price": 2450,
+      "photo": "bouquets/demo-06.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Солнце, которое можно взять с собой."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 7,
+    "fields": {
+      "name": "Белая песня",
+      "description": "Белые розы (15 шт.), рускус, упаковка из фетра",
+      "price": 3200,
+      "photo": "bouquets/demo-07.jpg",
+      "is_available": true,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Торжество, у которого есть голос."
+    }
+  },
+  {
+    "model": "bot.bouquet",
+    "pk": 8,
+    "fields": {
+      "name": "Осенний вальс",
+      "description": "Георгины (9 шт.), хризантемы, декоративная тыква",
+      "price": 2900,
+      "photo": "bouquets/demo-08.jpg",
+      "is_available": false,
+      "created_at": "2025-01-10T10:00:00Z",
+      "updated_at": "2025-01-10T10:00:00Z",
+      "poetic_text": "Тепло, собранное к холодам."
+    }
+  },
+  {
+    "model": "bot.composition",
+    "pk": 1,
+    "fields": {
+      "name": "Для именинницы",
+      "event": "birthday",
+      "bouquets": [
+        2,
+        4,
+        5,
+        6
+      ],
+      "is_available": true
+    }
+  },
+  {
+    "model": "bot.composition",
+    "pk": 2,
+    "fields": {
+      "name": "Свадебная классика",
+      "event": "wedding",
+      "bouquets": [
+        3,
+        7
+      ],
+      "is_available": true
+    }
+  },
+  {
+    "model": "bot.composition",
+    "pk": 3,
+    "fields": {
+      "name": "Первое сентября",
+      "event": "school",
+      "bouquets": [
+        1,
+        3,
+        6
+      ],
+      "is_available": true
+    }
+  },
+  {
+    "model": "bot.composition",
+    "pk": 4,
+    "fields": {
+      "name": "Просто так",
+      "event": "no_reason",
+      "bouquets": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "is_available": true
+    }
+  }
+]
