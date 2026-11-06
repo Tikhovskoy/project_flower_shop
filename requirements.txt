@@ -8,3 +8,8 @@ pillow==10.4.0
 python-dotenv==1.0.1
 python-telegram-bot==13.15
 pytz==2025.2
+# python-telegram-bot 13.15 не импортируется без urllib3 (встроенная копия сломана на Python 3.12),
+# а с urllib3 2.x не работает контриб-модуль appengine
+urllib3==1.26.20
+# APScheduler 3.6.3 импортирует pkg_resources, который убрали из setuptools 81+
+setuptools==80.10.2
