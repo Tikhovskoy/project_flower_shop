@@ -10,13 +10,12 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register(r'bouquets', BouquetViewSet)
-router.register(r'compositions', CompositionViewSet)
-router.register(r'orders', OrderViewSet)
-router.register(r'consultations', ConsultationViewSet)
+router.register(r"bouquets", BouquetViewSet)
+router.register(r"compositions", CompositionViewSet)
+router.register(r"orders", OrderViewSet)
+router.register(r"consultations", ConsultationViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('order/create/', OrderCreateView.as_view(), name='order-create'),
+    path("", include(router.urls)),
+    path("order/create/", OrderCreateView.as_view(), name="order-create"),
 ]
-

@@ -10,33 +10,33 @@ class CatalogFilter(filters.FilterSet):
     цена входящих в неё букетов.
     """
 
-    price_field = 'price'
+    price_field = "price"
 
     is_available = filters.BooleanFilter()
-    min_price = filters.NumberFilter(method='filter_min_price')
-    max_price = filters.NumberFilter(method='filter_max_price')
+    min_price = filters.NumberFilter(method="filter_min_price")
+    max_price = filters.NumberFilter(method="filter_max_price")
 
     def filter_min_price(self, queryset, name, value):
-        return self._by_price(queryset, 'gte', value)
+        return self._by_price(queryset, "gte", value)
 
     def filter_max_price(self, queryset, name, value):
-        return self._by_price(queryset, 'lte', value)
+        return self._by_price(queryset, "lte", value)
 
     def _by_price(self, queryset, lookup, value):
-        queryset = queryset.filter(**{f'{self.price_field}__{lookup}': value})
+        queryset = queryset.filter(**{f"{self.price_field}__{lookup}": value})
         # Через связь «многие ко многим» одна композиция может подойти несколько раз
-        return queryset.distinct() if '__' in self.price_field else queryset
+        return queryset.distinct() if "__" in self.price_field else queryset
 
 
 class BouquetFilter(CatalogFilter):
     class Meta:
         model = Bouquet
-        fields = ['price']
+        fields = ["price"]
 
 
 class CompositionFilter(CatalogFilter):
-    price_field = 'bouquets__price'
+    price_field = "bouquets__price"
 
     class Meta:
         model = Composition
-        fields = ['event']
+        fields = ["event"]

@@ -13,10 +13,7 @@ DEFAULT_REPLY = "Я вас не понял. Нажмите /start, чтобы н
 def handle_start(update: Update, context: CallbackContext):
     """Обработка команды /start. Отправляет сообщение с выбором события."""
     welcome_text = "К какому событию готовимся? Выберите один из вариантов, либо укажите свой."
-    update.message.reply_text(
-        text=welcome_text,
-        reply_markup=generate_event_keyboard()
-    )
+    update.message.reply_text(text=welcome_text, reply_markup=generate_event_keyboard())
 
 
 def handle_event_selection(update: Update, context: CallbackContext):
@@ -31,8 +28,7 @@ def handle_event_selection(update: Update, context: CallbackContext):
     else:
         context.user_data["event"] = data
         query.message.reply_text(
-            text="💰 На какую сумму рассчитываете?",
-            reply_markup=generate_budget_keyboard()
+            text="💰 На какую сумму рассчитываете?", reply_markup=generate_budget_keyboard()
         )
 
 
@@ -45,8 +41,7 @@ def handle_messages(update: Update, context: CallbackContext):
         context.user_data["event"] = custom_event
         context.user_data.pop("awaiting_custom_event", None)
         update.message.reply_text(
-            text="💰 На какую сумму рассчитываете?",
-            reply_markup=generate_budget_keyboard()
+            text="💰 На какую сумму рассчитываете?", reply_markup=generate_budget_keyboard()
         )
     elif "order_step" in context.user_data:
         process_order_step(update, context)

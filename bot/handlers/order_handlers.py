@@ -26,10 +26,12 @@ def handle_order_start(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=chat_id,
         text="💌 Хотите добавить открытку к букету?",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Да", callback_data="add_card_yes")],
-            [InlineKeyboardButton("Нет", callback_data="add_card_no")]
-        ])
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton("Да", callback_data="add_card_yes")],
+                [InlineKeyboardButton("Нет", callback_data="add_card_no")],
+            ]
+        ),
     )
 
 
@@ -70,7 +72,9 @@ def process_order_step(update: Update, context: CallbackContext):
         elif step == "address":
             context.user_data["address"] = text
             context.user_data["order_step"] = "delivery_time"
-            update.message.reply_text("📅 Укажите дату и время доставки (например: 2025-03-27 14:00):")
+            update.message.reply_text(
+                "📅 Укажите дату и время доставки (например: 2025-03-27 14:00):"
+            )
             return
 
         elif step == "delivery_time":
@@ -96,7 +100,7 @@ def process_order_step(update: Update, context: CallbackContext):
                 customer_name=context.user_data["customer_name"],
                 address=context.user_data["address"],
                 phone=text,
-                delivery_time=context.user_data["delivery_time"]
+                delivery_time=context.user_data["delivery_time"],
             )
             confirm_order(order)
             send_order_to_courier(context, order)

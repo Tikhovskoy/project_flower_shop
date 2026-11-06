@@ -20,9 +20,10 @@ def handle_consult_request(update: Update, context: CallbackContext):
     safe_delete_message(query)
     context.bot.send_message(
         chat_id=query.message.chat_id,
-        text="📱 Укажите номер телефона для связи с флористом (в течение 20 минут вам перезвонят):"
+        text="📱 Укажите номер телефона для связи с флористом (в течение 20 минут вам перезвонят):",
     )
     context.user_data["awaiting_phone"] = True
+
 
 def process_consult_request(update: Update, context: CallbackContext):
     phone = update.message.text.strip()
@@ -30,9 +31,7 @@ def process_consult_request(update: Update, context: CallbackContext):
 
     try:
         consultation_data = request_consultation(
-            phone=phone,
-            user_id=user.id,
-            name=user.full_name or user.username or "(без имени)"
+            phone=phone, user_id=user.id, name=user.full_name or user.username or "(без имени)"
         )
 
         florist_id = settings.FLORIST_ID
@@ -40,8 +39,8 @@ def process_consult_request(update: Update, context: CallbackContext):
             context.bot.send_message(
                 chat_id=florist_id,
                 text=f"📞 Новая консультация:\n"
-                     f"Имя: {consultation_data['name']}\n"
-                     f"Телефон: {consultation_data['phone']}"
+                f"Имя: {consultation_data['name']}\n"
+                f"Телефон: {consultation_data['phone']}",
             )
 
         update.message.reply_text(
@@ -65,8 +64,3 @@ def process_consult_request(update: Update, context: CallbackContext):
 
     except ConsultationSaveError:
         update.message.reply_text("⚠️ Не удалось сохранить заявку. Попробуйте позже.")
-
-
-
-
-

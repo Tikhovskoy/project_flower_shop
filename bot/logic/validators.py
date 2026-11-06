@@ -6,7 +6,7 @@ import pytz
 
 from bot.exceptions import InvalidPhoneError
 
-KRASNOYARSK_TZ = pytz.timezone('Asia/Krasnoyarsk')
+KRASNOYARSK_TZ = pytz.timezone("Asia/Krasnoyarsk")
 
 INVALID_PHONE_MESSAGE = "Неверный формат номера. Пример: +79991234567"
 

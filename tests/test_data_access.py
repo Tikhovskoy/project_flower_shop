@@ -71,7 +71,9 @@ class TestGetCompositions:
         birthday = make_composition(
             "День рождения", "birthday", [catalog["cheap"], catalog["mid"], catalog["hidden"]]
         )
-        birthday_two = make_composition("Именинница", "birthday", [catalog["mid"], catalog["upper"]])
+        birthday_two = make_composition(
+            "Именинница", "birthday", [catalog["mid"], catalog["upper"]]
+        )
         wedding = make_composition("Свадьба", "wedding", [catalog["pricey"]])
         return birthday, birthday_two, wedding
 
@@ -90,7 +92,9 @@ class TestGetCompositions:
     def test_price_range_applies_inside_event(self, compositions):
         assert names(get_compositions("birthday", 500, 1200)) == ["Средний"]
 
-    def test_none_means_no_upper_bound_inside_event(self, compositions, make_bouquet, make_composition):
+    def test_none_means_no_upper_bound_inside_event(
+        self, compositions, make_bouquet, make_composition
+    ):
         make_composition("Эксклюзив", "gala", [make_bouquet("Эксклюзив", 15_000_000)])
 
         assert names(get_compositions("gala", 0, None)) == ["Эксклюзив"]
@@ -151,7 +155,9 @@ class TestSaveOrder:
     def test_delivery_time_is_saved(self, draft):
         save_order(draft)
 
-        assert Order.objects.get().delivery_time == KRASNOYARSK.localize(datetime(2025, 3, 28, 14, 0))
+        assert Order.objects.get().delivery_time == KRASNOYARSK.localize(
+            datetime(2025, 3, 28, 14, 0)
+        )
 
     def test_unknown_bouquet_leaves_no_half_saved_order(self, draft):
         draft.bouquet_id = 999_999

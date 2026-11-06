@@ -48,7 +48,9 @@ class TestConfirmOrder:
     @pytest.fixture
     def ready_order(self, bouquet):
         draft = create_order(bouquet).add_card_text("С днём рождения!")
-        return draft.set_contact_info("Анна", "ул. Тестовая, 1", "8 (913) 123-45-67", "28.03.2025 14:00")
+        return draft.set_contact_info(
+            "Анна", "ул. Тестовая, 1", "8 (913) 123-45-67", "28.03.2025 14:00"
+        )
 
     def test_saves_order_to_database(self, ready_order, bouquet):
         result = confirm_order(ready_order)

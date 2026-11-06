@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+
 import os
 import sys
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'FlowerShopBot.settings')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "FlowerShopBot.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -21,9 +22,9 @@ def main():
     try:
         _ = settings.INSTALLED_APPS  # загружаем настройки сразу, чтобы увидеть понятную ошибку
     except ImproperlyConfigured as exc:
-        sys.exit(f'Ошибка конфигурации: {exc}')
+        sys.exit(f"Ошибка конфигурации: {exc}")
     execute_from_command_line(sys.argv)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

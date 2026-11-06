@@ -51,7 +51,7 @@ class OrderCreateView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        items_data = data.pop('items', [])
+        items_data = data.pop("items", [])
         order_serializer = OrderSerializer(data=data)
 
         if order_serializer.is_valid():

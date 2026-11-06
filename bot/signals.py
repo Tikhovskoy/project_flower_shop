@@ -10,4 +10,3 @@ def update_order_total(sender, instance, **kwargs):
     """Пересчитывает сумму заказа при изменении товаров в заказе"""
     order = instance.order
     order.calculate_total()
-
